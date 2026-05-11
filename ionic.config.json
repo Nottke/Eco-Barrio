@@ -1,0 +1,7 @@
+{
+  "name": "eco-barrio",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
