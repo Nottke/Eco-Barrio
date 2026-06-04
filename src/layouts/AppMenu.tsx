@@ -61,7 +61,7 @@ export function AppMenu({ menuId = 'eco-menu', contentId = 'eco-main' }: Props) 
         ) : null}
 
         <IonNote className="ion-padding-horizontal ion-margin-bottom" color="medium">
-          Santo Domingo — participación y ambiente (solo frontend piloto).
+          Santo Domingo — participación y ambiente.
         </IonNote>
 
         <IonList lines="none">
@@ -93,10 +93,12 @@ export function AppMenu({ menuId = 'eco-menu', contentId = 'eco-main' }: Props) 
               <IonIcon icon={notificationsOutline} slot="start" aria-hidden />
               <IonLabel>Notificaciones</IonLabel>
             </IonItem>
-            <IonItem routerLink="/app/admin">
-              <IonIcon icon={shieldOutline} slot="start" aria-hidden />
-              <IonLabel>Administración</IonLabel>
-            </IonItem>
+            {user?.role === 'ADMIN' && (
+              <IonItem routerLink="/app/admin">
+                <IonIcon icon={shieldOutline} slot="start" aria-hidden />
+                <IonLabel>Administración</IonLabel>
+              </IonItem>
+            )}
           </IonMenuToggle>
 
           <IonItem button detail={false} lines="full" onClick={() => closeFlow()}>

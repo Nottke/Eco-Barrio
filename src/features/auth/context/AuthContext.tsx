@@ -14,7 +14,7 @@ import type {
 } from '../client/frontendAuth.contract';
 
 import type { AuthUser } from '../types';
-import { createBrowserFrontendCredentialsClient } from '../client/browserFrontendCredentials.adapter';
+import { createBackendFrontendCredentialsClient } from '../client/backendFrontendCredentials.adapter';
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -31,7 +31,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const defaultFrontendAuthClient =
-  createBrowserFrontendCredentialsClient();
+  createBackendFrontendCredentialsClient();
 
 export function AuthProvider({
   children,
@@ -61,7 +61,7 @@ export function AuthProvider({
       const result = await client.login(email.trim(), password);
       if (!result.ok) return result;
       setUser(result.user);
-      return { ok: true } as const;
+      return result;
     },
     [client]
   );
@@ -71,7 +71,7 @@ export function AuthProvider({
       const result = await client.register(name, email, password);
       if (!result.ok) return result;
       setUser(result.user);
-      return { ok: true } as const;
+      return result;
     },
     [client]
   );
