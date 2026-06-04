@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+
+  reports   Report[]
+}
+
+model Report {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String
+  location    String
+  status      ReportStatus @default(PENDING)
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model News {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  location    String
+  date        DateTime
+  createdAt   DateTime @default(now())
+}
+
+model RecyclingPoint {
+  id          Int     @id @default(autoincrement())
+  name        String
+  address     String
+  latitude    Float?
+  longitude   Float?
+  description String?
+}
+
+model Indicator {
+  id        Int      @id @default(autoincrement())
+  name      String
+  value     Float
+  unit      String
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ReportStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RESOLVED
+}

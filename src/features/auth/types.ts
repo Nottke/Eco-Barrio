@@ -1,7 +1,10 @@
+export type UserRole = 'USER' | 'ADMIN';
+
 export type AuthUser = {
-  id: string;
+  id: number;
   name: string;
   email: string;
+  role: UserRole;
 };
 
 /** Registro sólo frontend */

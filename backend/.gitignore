@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+
+# Environment variables
+.env
+
+# SQLite
+*.db
+*.db-journal
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage
+
+# Build
+dist
+
+# Prisma generated files
+/generated/prisma
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -8,9 +8,11 @@ import { AdminDashboardPage } from '../features/admin';
 import { EnvironmentalIndicatorsPage } from '../features/indicators';
 import { NotificationsSettingsPage } from '../features/notifications';
 import { RecyclingPointsPage } from '../features/recycling';
+import { useAuth } from '../features/auth/context/AuthContext';
 
 import { AppMenu } from './AppMenu';
 import { CitizenTabs } from './CitizenTabs';
+
 
 const TAB_HOME_PATHS: string[] = [
   '/app/inicio',
@@ -20,6 +22,7 @@ const TAB_HOME_PATHS: string[] = [
 ];
 
 export function CitizenLayout(_props: RouteChildrenProps) {
+  const { user } = useAuth();
   return (
     <IonSplitPane contentId="eco-main" when="lg">
       <AppMenu />
@@ -34,7 +37,18 @@ export function CitizenLayout(_props: RouteChildrenProps) {
             path="/app/notificaciones"
             component={NotificationsSettingsPage}
           />
-          <Route exact path="/app/admin" component={AdminDashboardPage} />
+
+          <Route
+            exact
+            path="/app/admin"
+            render={() =>
+              user?.role === 'ADMIN' ? (
+                <AdminDashboardPage />
+              ) : (
+                <Redirect to="/app/inicio" />
+              )
+            }
+          />
 
           <Route
             path={TAB_HOME_PATHS}
