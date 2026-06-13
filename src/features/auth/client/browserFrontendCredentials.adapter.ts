@@ -1,5 +1,6 @@
 import type { FrontendCredentialsClient } from './frontendAuth.contract';
-import type { AuthUser } from '../types';
+import type { AuthUser, StoredCredential } from '../types';
+
 import {
   clearSessionMarker,
   readCredentials,
@@ -7,16 +8,23 @@ import {
   writeCredentials,
   writeSessionToken,
 } from './localStorage.credentialsStore';
-import { isStrongEnoughPassword, isValidEmail } from '../utils/validation';
+
+import {
+  isStrongEnoughPassword,
+  isValidEmail,
+} from '../utils/validation';
 
 function publicUser(user: AuthUser): AuthUser {
-  return { id: user.id, name: user.name, email: user.email };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
 }
 
-function newGuestId(): string {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `user-${Date.now()}`;
+function newGuestId(): number {
+  return Date.now();
 }
 
 /** Implementación navegador sin servidor. */
@@ -24,14 +32,20 @@ export function createBrowserFrontendCredentialsClient(): FrontendCredentialsCli
   return {
     async bootstrap() {
       const users = readCredentials();
-      const u = resolveUserFromSession(users);
-      return Promise.resolve({ user: u ? publicUser(u) : null });
+      const user = resolveUserFromSession(users);
+
+      return Promise.resolve({
+        user: user ? publicUser(user) : null,
+      });
     },
 
     async login(email: string, password: string) {
       const trimmedEmail = email.trim().toLowerCase();
       const users = readCredentials();
-      const match = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+
+      const match = users.find(
+        (user) => user.email.toLowerCase() === trimmedEmail,
+      );
 
       if (!match || match.password !== password) {
         return Promise.resolve({
@@ -41,7 +55,11 @@ export function createBrowserFrontendCredentialsClient(): FrontendCredentialsCli
       }
 
       writeSessionToken(match.id);
-      return Promise.resolve({ ok: true, user: publicUser(match) });
+
+      return Promise.resolve({
+        ok: true,
+        user: publicUser(match),
+      });
     },
 
     async register(name: string, email: string, password: string) {
@@ -54,12 +72,14 @@ export function createBrowserFrontendCredentialsClient(): FrontendCredentialsCli
           message: 'Introduce tu nombre completo.',
         });
       }
+
       if (!isValidEmail(trimmedEmail)) {
         return Promise.resolve({
           ok: false,
           message: 'Correo electrónico no válido.',
         });
       }
+
       if (!isStrongEnoughPassword(password)) {
         return Promise.resolve({
           ok: false,
@@ -68,7 +88,11 @@ export function createBrowserFrontendCredentialsClient(): FrontendCredentialsCli
       }
 
       const users = readCredentials();
-      const exists = users.some((u) => u.email.toLowerCase() === trimmedEmail);
+
+      const exists = users.some(
+        (user) => user.email.toLowerCase() === trimmedEmail,
+      );
+
       if (exists) {
         return Promise.resolve({
           ok: false,
@@ -76,15 +100,17 @@ export function createBrowserFrontendCredentialsClient(): FrontendCredentialsCli
         });
       }
 
-      const id = newGuestId();
-      const nextRow = {
-        id,
+      const nextRow: StoredCredential = {
+        id: newGuestId(),
         name: trimmedName,
         email: trimmedEmail,
         password,
+        role: 'USER',
       };
+
       writeCredentials([...users, nextRow]);
-      writeSessionToken(id);
+      writeSessionToken(nextRow.id);
+
       return Promise.resolve({
         ok: true,
         user: publicUser(nextRow),

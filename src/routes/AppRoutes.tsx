@@ -9,7 +9,7 @@ import {
   RegisterPage,
 } from '../features';
 
-import { CitizenLayout } from '../layouts/CitizenLayout';
+import { RoleBasedLayout } from '../layouts/RoleBasedLayout';
 
 export function AppRoutes() {
   return (
@@ -31,7 +31,7 @@ export function AppRoutes() {
 
         <Route exact path="/register" component={RegisterPage} />
 
-        <PrivateRoute path="/app" exact={false} component={CitizenLayout} />
+        <PrivateRoute path="/app" exact={false} component={RoleBasedLayout} />
 
         <Route exact path="/">
           <Redirect to="/login" />
