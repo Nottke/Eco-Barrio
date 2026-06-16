@@ -34,6 +34,7 @@ router.delete(
     deleteRecyclingPoint
 );
 
+router.get("/:id", authMiddleware, getRecyclingPointById);
 router.get("/", authMiddleware, getRecyclingPoints);
 
 

@@ -4,34 +4,70 @@ const prisma = require("../prisma");
 const createIndicator = async (req, res) => {
   try {
     const { name, value, unit } = req.body;
+    const trimmedName = name?.trim();
+    const trimmedUnit = unit?.trim();
 
-    if (!name || value === undefined || !unit) {
+    if (!trimmedName || value === undefined || !trimmedUnit) {
       return res.status(400).json({
         message: "Nombre, valor y unidad son obligatorios",
       });
     }
 
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return res.status(400).json({
+        message: "El valor debe ser numérico",
+      });
+    }
+
+    if (trimmedName.length < 3 || trimmedName.length > 100) {
+      return res.status(400).json({
+        message: "El nombre debe tener entre 3 y 100 caracteres",
+      });
+    }
+
+    if (trimmedUnit.length > 30) {
+      return res.status(400).json({
+        message: "La unidad no puede superar los 30 caracteres",
+      });
+    }
+
+    if (numericValue < 0) {
+      return res.status(400).json({
+        message: "El valor no puede ser negativo",
+      });
+    }
+
+    if (numericValue > 1000000000) {
+      return res.status(400).json({
+        message: "El valor supera el máximo permitido",
+      });
+    }
+
     const indicator = await prisma.indicator.create({
       data: {
-        name,
-        value: Number(value),
-        unit,
+        name: trimmedName,
+        value: numericValue,
+        unit: trimmedUnit,
       },
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Indicador creado correctamente",
       indicator,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Error al crear indicador:", error);
+
+    return res.status(500).json({
       message: "Error al crear indicador",
       error: error.message,
     });
   }
 };
 
-//crear indicador
+//obtener indicadores
 const getIndicators = async (req, res) => {
   try {
     const indicators = await prisma.indicator.findMany({
@@ -81,23 +117,69 @@ const updateIndicator = async (req, res) => {
     const { id } = req.params;
     const { name, value, unit } = req.body;
 
+    const trimmedName = name?.trim();
+    const trimmedUnit = unit?.trim();
+
+    if (!trimmedName || value === undefined || !trimmedUnit) {
+      return res.status(400).json({
+        message: "Nombre, valor y unidad son obligatorios",
+      });
+    }
+
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return res.status(400).json({
+        message: "El valor debe ser numérico",
+      });
+    }
+
+    if (trimmedName.length < 3 || trimmedName.length > 100) {
+      return res.status(400).json({
+        message: "El nombre debe tener entre 3 y 100 caracteres",
+      });
+    }
+
+    if (trimmedUnit.length > 30) {
+      return res.status(400).json({
+        message: "La unidad no puede superar los 30 caracteres",
+      });
+    }
+
+    if (numericValue < 0) {
+      return res.status(400).json({
+        message: "El valor no puede ser negativo",
+      });
+    }
+
+    if (numericValue > 1000000000) {
+      return res.status(400).json({
+        message: "El valor supera el máximo permitido",
+      });
+    }
+
     const indicator = await prisma.indicator.update({
       where: {
         id: Number(id),
       },
       data: {
-        name,
-        value: Number(value),
-        unit,
+        name: trimmedName,
+        value: numericValue,
+        unit: trimmedUnit,
       },
     });
 
-    res.json({
+    return res.json({
       message: "Indicador actualizado correctamente",
       indicator,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error(
+      "Error Prisma al actualizar indicador:",
+      error,
+    );
+
+    return res.status(500).json({
       message: "Error al actualizar indicador",
       error: error.message,
     });
@@ -126,10 +208,91 @@ const deleteIndicator = async (req, res) => {
   }
 };
 
+// obtener indicadores automáticos desde datos reales
+const getAutomaticIndicators = async (req, res) => {
+  try {
+    const now = new Date();
+
+    const [
+      totalReports,
+      pendingReports,
+      approvedReports,
+      rejectedReports,
+      resolvedReports,
+      totalNews,
+      upcomingEvents,
+      totalRecyclingPoints,
+    ] = await Promise.all([
+      prisma.report.count(),
+
+      prisma.report.count({
+        where: {
+          status: "PENDING",
+        },
+      }),
+
+      prisma.report.count({
+        where: {
+          status: "APPROVED",
+        },
+      }),
+
+      prisma.report.count({
+        where: {
+          status: "REJECTED",
+        },
+      }),
+
+      prisma.report.count({
+        where: {
+          status: "RESOLVED",
+        },
+      }),
+
+      prisma.news.count(),
+
+      prisma.event.count({
+        where: {
+          date: {
+            gte: now,
+          },
+        },
+      }),
+
+      prisma.recyclingPoint.count(),
+    ]);
+
+    return res.json({
+      generatedAt: now.toISOString(),
+      indicators: {
+        totalReports,
+        pendingReports,
+        approvedReports,
+        rejectedReports,
+        resolvedReports,
+        totalNews,
+        upcomingEvents,
+        totalRecyclingPoints,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "Error al obtener indicadores automáticos:",
+      error,
+    );
+
+    return res.status(500).json({
+      message: "Error al obtener indicadores automáticos",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createIndicator,
   getIndicators,
   getIndicatorById,
+  getAutomaticIndicators,
   updateIndicator,
   deleteIndicator,
 };

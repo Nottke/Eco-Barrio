@@ -26,6 +26,11 @@ const createRecyclingPoint = async (req, res) => {
       recyclingPoint,
     });
   } catch (error) {
+    console.error(
+      "Error Prisma al crear punto de reciclaje:",
+      error
+    );
+
     res.status(500).json({
       message: "Error al crear punto de reciclaje",
       error: error.message,
@@ -44,6 +49,11 @@ const getRecyclingPoints = async (req, res) => {
 
     res.json(recyclingPoints);
   } catch (error) {
+    console.error(
+      "Error Prisma al obtener puntos de reciclaje:",
+      error
+    );
+
     res.status(500).json({
       message: "Error al obtener puntos de reciclaje",
       error: error.message,

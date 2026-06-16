@@ -4,6 +4,7 @@ const {
   createIndicator,
   getIndicators,
   getIndicatorById,
+  getAutomaticIndicators,
   updateIndicator,
   deleteIndicator,
 } = require("../controllers/indicators.controller");
@@ -35,6 +36,13 @@ router.delete(
 );
 
 router.get("/", authMiddleware, getIndicators);
+
+router.get(
+  "/automatic",
+  authMiddleware,
+  getAutomaticIndicators
+);
+
 router.get("/:id", authMiddleware, getIndicatorById);
 
 module.exports = router;

@@ -54,6 +54,7 @@ model RecyclingPoint {
   latitude    Float?
   longitude   Float?
   description String?
+  createdAt DateTime @default(now())
 }
 
 model Indicator {
