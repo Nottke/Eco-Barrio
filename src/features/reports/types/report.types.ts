@@ -30,3 +30,15 @@ export type UpdateReportStatusResponse = {
 export type DeleteReportResponse = {
   message: string;
 };
+
+export type CreateReportPayload = {
+  title: string;
+  description: string;
+  location: string;
+  imageUrl?: string | null;
+};
+
+export type CreateReportResponse = {
+  message: string;
+  report: EnvironmentalReport;
+};

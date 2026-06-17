@@ -1,7 +1,8 @@
 export type {
+  CreateReportPayload,
+  CreateReportResponse,
   DeleteReportResponse,
   EnvironmentalReport,
-  ReportAuthor,
   ReportStatus,
   UpdateReportStatusResponse,
 } from './report.types';

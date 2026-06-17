@@ -1,10 +1,20 @@
-const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+require("dotenv").config();
 
-const adapter = new PrismaBetterSqlite3({
-  url: "file:./dev.db",
+const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL no está definida");
+}
+
+const adapter = new PrismaPg({
+  connectionString,
 });
 
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient({
+  adapter,
+});
 
 module.exports = prisma;

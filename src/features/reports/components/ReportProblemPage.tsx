@@ -8,6 +8,7 @@ import {
   IonCardSubtitle,
   IonCardTitle,
   IonContent,
+  IonInput,
   IonItem,
   IonLabel,
   IonList,
@@ -15,87 +16,250 @@ import {
   IonPage,
   IonSelect,
   IonSelectOption,
+  IonSpinner,
+  IonText,
   IonTextarea,
   useIonToast,
 } from '@ionic/react';
 
 import { CitizenTabHeader } from '../../../components/CitizenHeaders';
 
+import { createReport } from '../services';
+
+const CATEGORY_TITLES: Record<string, string> = {
+  basuras: 'Basura abandonada',
+  alumbrado: 'Problema de alumbrado público',
+  agua_canalizacion: 'Problema de agua o canalización',
+  otro: 'Otro problema ambiental',
+};
+
+function getErrorMessage(error: unknown): string {
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'No fue posible enviar el reporte.';
+}
+
 const ReportProblemPage = () => {
-  const [category, setCategory] = useState<string>('basuras');
+  const [category, setCategory] = useState('basuras');
   const [detail, setDetail] = useState('');
+  const [location, setLocation] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   const [presentToast] = useIonToast();
 
-  function submitDummy() {
-    if (detail.trim().length < 8) {
-      void presentToast({
-        message: 'Describe un poco más el problema antes de enviar.',
-        duration: 2200,
-        color: 'warning',
-      });
+  const handleSubmit = async () => {
+    const trimmedDetail = detail.trim();
+    const trimmedLocation = location.trim();
+    const trimmedImageUrl = imageUrl.trim();
+
+    setErrorMessage('');
+
+    if (trimmedDetail.length < 8) {
+      setErrorMessage(
+        'La descripción debe tener al menos 8 caracteres.',
+      );
       return;
     }
-    void presentToast({
-      message: 'Datos sin backend.',
-      duration: 2500,
-      color: 'success',
-    });
-  }
+
+    if (!trimmedLocation) {
+      setErrorMessage(
+        'Debes indicar una ubicación o referencia cercana.',
+      );
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      await createReport({
+        title:
+          CATEGORY_TITLES[category] ??
+          'Reporte ambiental',
+        description: trimmedDetail,
+        location: trimmedLocation,
+        imageUrl: trimmedImageUrl || null,
+      });
+
+      setDetail('');
+      setLocation('');
+      setImageUrl('');
+      setCategory('basuras');
+
+      await presentToast({
+        message: 'Reporte enviado correctamente.',
+        duration: 2500,
+        color: 'success',
+      });
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <IonPage>
       <CitizenTabHeader title="Reportar problema" />
+
       <IonContent fullscreen className="ion-padding">
         <IonCard>
           <IonCardHeader>
-            <IonCardSubtitle>Usuario común</IonCardSubtitle>
-            <IonCardTitle>Reportes ambientales y de ornato</IonCardTitle>
+            <IonCardSubtitle>
+              Participación ciudadana
+            </IonCardSubtitle>
+
+            <IonCardTitle>
+              Reportar un problema ambiental
+            </IonCardTitle>
           </IonCardHeader>
+
           <IonCardContent>
-            Selecciona un tipo brevemente y describe ubicación cercana visible,
-            seguridad pendiente cuando existan geodatos municipales.
+            Informa una situación ambiental o de ornato e incluye una
+            referencia clara de su ubicación.
           </IonCardContent>
         </IonCard>
 
         <IonList inset>
           <IonItem>
             <IonSelect
-              aria-label="Categoría"
+              aria-label="Categoría del reporte"
               interface="popover"
-              label="Categoría del reporte"
+              label="Categoría del reporte *"
               labelPlacement="stacked"
               value={category}
-              onIonChange={(ev) =>
-                setCategory(String(ev.detail.value ?? 'basuras'))
+              disabled={submitting}
+              onIonChange={(event) =>
+                setCategory(
+                  String(
+                    event.detail.value ??
+                      'basuras',
+                  ),
+                )
               }
             >
-              <IonSelectOption value="basuras">Basura abandonada</IonSelectOption>
-              <IonSelectOption value="alumbrado">Alumbrado público</IonSelectOption>
-              <IonSelectOption value="agua_canalización">Agua o canalización</IonSelectOption>
-              <IonSelectOption value="otro">Otro</IonSelectOption>
+              <IonSelectOption value="basuras">
+                Basura abandonada
+              </IonSelectOption>
+
+              <IonSelectOption value="alumbrado">
+                Alumbrado público
+              </IonSelectOption>
+
+              <IonSelectOption value="agua_canalizacion">
+                Agua o canalización
+              </IonSelectOption>
+
+              <IonSelectOption value="otro">
+                Otro
+              </IonSelectOption>
             </IonSelect>
           </IonItem>
+
+          <IonItem>
+            <IonLabel position="stacked">
+              Ubicación o referencia *
+            </IonLabel>
+
+            <IonInput
+              value={location}
+              placeholder="Ej. Avenida principal, frente al paradero"
+              disabled={submitting}
+              onIonInput={(event) =>
+                setLocation(
+                  event.detail.value ?? '',
+                )
+              }
+            />
+          </IonItem>
+
           <IonItem lines="full">
-            <IonLabel position="stacked">Descripción para la municipalidad</IonLabel>
+            <IonLabel position="stacked">
+              Descripción para la municipalidad *
+            </IonLabel>
+
             <IonTextarea
               aria-label="Descripción detallada"
               autoGrow
-              placeholder="Ej: esquina con calle ..., acumulación de ..."
+              placeholder="Describe el problema con el mayor detalle posible"
               value={detail}
               rows={6}
-              onIonInput={(ev) => setDetail(ev.detail.value ?? '')}
+              disabled={submitting}
+              onIonInput={(event) =>
+                setDetail(
+                  event.detail.value ?? '',
+                )
+              }
+            />
+          </IonItem>
+
+          <IonItem>
+            <IonLabel position="stacked">
+              URL de imagen (opcional)
+            </IonLabel>
+
+            <IonInput
+              type="url"
+              value={imageUrl}
+              placeholder="https://..."
+              disabled={submitting}
+              onIonInput={(event) =>
+                setImageUrl(
+                  event.detail.value ?? '',
+                )
+              }
             />
           </IonItem>
         </IonList>
 
-        <IonNote color="medium" className="ion-padding-horizontal ion-margin-top">
-          Protección de datos: sólo ejemplo local; cuando haya servidor se aplicará consentimiento explícito.
+        <IonNote
+          color="medium"
+          className="ion-padding-horizontal ion-margin-top"
+        >
+          * Campos obligatorios. No incluyas información personal
+          innecesaria en la descripción.
         </IonNote>
 
+        {errorMessage ? (
+          <IonText color="danger">
+            <p className="ion-padding-horizontal">
+              {errorMessage}
+            </p>
+          </IonText>
+        ) : null}
+
         <div className="ion-padding-horizontal ion-margin-top ion-margin-bottom">
-          <IonButton expand="block" onClick={() => submitDummy()}>
-            Enviar reporte simulado
+          <IonButton
+            expand="block"
+            disabled={submitting}
+            onClick={() =>
+              void handleSubmit()
+            }
+          >
+            {submitting
+              ? 'Enviando reporte...'
+              : 'Enviar reporte'}
           </IonButton>
+
+          {submitting ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                paddingTop: '1rem',
+              }}
+            >
+              <IonSpinner name="dots" />
+            </div>
+          ) : null}
         </div>
       </IonContent>
     </IonPage>

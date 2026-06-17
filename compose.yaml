@@ -1,0 +1,29 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: eco-barrio-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ecobarrio
+      POSTGRES_PASSWORD: ecobarrio_dev
+      POSTGRES_DB: ecobarrio
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - eco_barrio_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ecobarrio -d ecobarrio"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  eco_barrio_postgres_data:

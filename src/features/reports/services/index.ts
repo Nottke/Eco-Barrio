@@ -1,4 +1,5 @@
 export {
+  createReport,
   deleteReport,
   getReportById,
   getReports,

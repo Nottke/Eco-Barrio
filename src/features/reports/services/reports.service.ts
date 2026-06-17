@@ -1,11 +1,25 @@
 import api from '../../../services/api';
 
 import type {
+  CreateReportPayload,
+  CreateReportResponse,
   DeleteReportResponse,
   EnvironmentalReport,
   ReportStatus,
   UpdateReportStatusResponse,
 } from '../types';
+
+export async function createReport(
+  payload: CreateReportPayload,
+): Promise<EnvironmentalReport> {
+  const response =
+    await api.post<CreateReportResponse>(
+      '/reports',
+      payload,
+    );
+
+  return response.data.report;
+}
 
 export async function getReports(): Promise<EnvironmentalReport[]> {
   const response = await api.get<EnvironmentalReport[]>('/reports');
