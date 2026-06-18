@@ -1,1 +1,7 @@
-export { default as RecyclingPointsPage } from './components/RecyclingPointsPage';
+export {
+  RecyclingMap,
+  RecyclingPointsPage,
+} from './components';
+
+export * from './services';
+export type * from './types';

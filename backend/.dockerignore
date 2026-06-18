@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log*
+
+.env
+.env.*
+
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+dist/
+coverage/
+
+.git/
+.gitignore

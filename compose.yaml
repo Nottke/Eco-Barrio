@@ -25,5 +25,39 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: eco-barrio-backend
+    restart: unless-stopped
+
+    environment:
+      DATABASE_URL: postgresql://ecobarrio:ecobarrio_dev@postgres:5432/ecobarrio?schema=public
+      JWT_SECRET: ${JWT_SECRET:-eco_barrio_dev_secret}
+      PORT: 3000
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: eco-barrio-frontend
+    restart: unless-stopped
+
+    ports:
+      - "8080:80"
+
+    depends_on:
+      - backend
+
 volumes:
   eco_barrio_postgres_data:
