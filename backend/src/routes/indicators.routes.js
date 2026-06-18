@@ -14,6 +14,12 @@ const roleMiddleware = require("../middlewares/role.middleware");
 
 const router = express.Router();
 
+// Lectura pública
+router.get("/", getIndicators);
+router.get("/automatic", getAutomaticIndicators);
+router.get("/:id", getIndicatorById);
+
+// Gestión exclusiva del administrador
 router.post(
   "/",
   authMiddleware,
@@ -34,15 +40,5 @@ router.delete(
   roleMiddleware("ADMIN"),
   deleteIndicator
 );
-
-router.get("/", authMiddleware, getIndicators);
-
-router.get(
-  "/automatic",
-  authMiddleware,
-  getAutomaticIndicators
-);
-
-router.get("/:id", authMiddleware, getIndicatorById);
 
 module.exports = router;

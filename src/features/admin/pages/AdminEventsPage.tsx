@@ -13,7 +13,9 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonSpinner,
   IonText,
@@ -54,14 +56,30 @@ function getErrorMessage(error: unknown): string {
 
 function getDefaultEventDate(): string {
   const date = new Date();
+
   date.setHours(date.getHours() + 1);
   date.setMinutes(0, 0, 0);
 
   return date.toISOString();
 }
 
+function formatEventDate(dateValue: string): string {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha no disponible';
+  }
+
+  return date.toLocaleString('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
 const AdminEventsPage = () => {
-  const [events, setEvents] = useState<EnvironmentalEvent[]>([]);
+  const [events, setEvents] =
+    useState<EnvironmentalEvent[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -80,7 +98,9 @@ const AdminEventsPage = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [date, setDate] = useState(getDefaultEventDate());
+  const [date, setDate] = useState(
+    getDefaultEventDate(),
+  );
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
@@ -88,7 +108,14 @@ const AdminEventsPage = () => {
 
     try {
       const data = await getEvents();
-      setEvents(data);
+
+      setEvents(
+        [...data].sort(
+          (first, second) =>
+            new Date(first.date).getTime() -
+            new Date(second.date).getTime(),
+        ),
+      );
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -108,7 +135,9 @@ const AdminEventsPage = () => {
     setDate(getDefaultEventDate());
   };
 
-  const handleStartEdit = (event: EnvironmentalEvent) => {
+  const handleStartEdit = (
+    event: EnvironmentalEvent,
+  ) => {
     setEditingId(event.id);
     setTitle(event.title);
     setDescription(event.description);
@@ -151,7 +180,9 @@ const AdminEventsPage = () => {
     const parsedDate = new Date(date);
 
     if (Number.isNaN(parsedDate.getTime())) {
-      setErrorMessage('La fecha seleccionada no es válida.');
+      setErrorMessage(
+        'La fecha seleccionada no es válida.',
+      );
       setSuccessMessage('');
       return;
     }
@@ -192,7 +223,8 @@ const AdminEventsPage = () => {
           'Evento actualizado correctamente.',
         );
       } else {
-        const createdEvent = await createEvent(payload);
+        const createdEvent =
+          await createEvent(payload);
 
         setEvents((currentEvents) =>
           [createdEvent, ...currentEvents].sort(
@@ -265,225 +297,385 @@ const AdminEventsPage = () => {
       </IonHeader>
 
       <IonContent fullscreen className="ion-padding">
-        <h1>Eventos ecológicos</h1>
-
-        <p style={{ opacity: 0.8 }}>
-          Administra actividades ambientales, jornadas comunitarias,
-          talleres y campañas ecológicas.
-        </p>
-
-        <IonCard>
-          <IonCardHeader>
-            <IonCardSubtitle>
-              Actividad comunal
-            </IonCardSubtitle>
-
-            <IonCardTitle>
-              {isEditing
-                ? `Editar evento #${editingId}`
-                : 'Crear evento'}
-            </IonCardTitle>
-          </IonCardHeader>
-
-          <IonCardContent>
-            <IonItem>
-              <IonLabel position="stacked">
-                Título
-              </IonLabel>
-
-              <IonInput
-                value={title}
-                placeholder="Ej. Jornada de limpieza comunitaria"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setTitle(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Descripción
-              </IonLabel>
-
-              <IonTextarea
-                value={description}
-                placeholder="Describe la actividad"
-                autoGrow
-                disabled={saving}
-                onIonInput={(event) =>
-                  setDescription(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Ubicación
-              </IonLabel>
-
-              <IonInput
-                value={location}
-                placeholder="Ej. Plaza principal de Santo Domingo"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setLocation(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Fecha y hora
-              </IonLabel>
-
-              <IonDatetime
-                value={date}
-                presentation="date-time"
-                disabled={saving}
-                onIonChange={(event) => {
-                  const selectedValue = event.detail.value;
-
-                  if (typeof selectedValue === 'string') {
-                    setDate(selectedValue);
-                  }
-                }}
-              />
-            </IonItem>
-
-            <IonButton
-              expand="block"
-              className="ion-margin-top"
-              disabled={saving}
-              onClick={() => void handleSaveEvent()}
-            >
-              {saving
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Crear evento'}
-            </IonButton>
-
-            {isEditing ? (
-              <IonButton
-                expand="block"
-                fill="clear"
-                color="medium"
-                disabled={saving}
-                onClick={handleCancelEdit}
-              >
-                Cancelar edición
-              </IonButton>
-            ) : null}
-
-            {saving ? (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  paddingTop: '1rem',
-                }}
-              >
-                <IonSpinner name="dots" />
-              </div>
-            ) : null}
-          </IonCardContent>
-        </IonCard>
-
-        {successMessage ? (
-          <IonText color="success">
-            <p>{successMessage}</p>
-          </IonText>
-        ) : null}
-
-        {errorMessage ? (
-          <IonText color="danger">
-            <p>{errorMessage}</p>
-          </IonText>
-        ) : null}
-
-        <IonButton
-          fill="outline"
-          disabled={loading}
-          onClick={() => void loadEvents()}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
         >
-          Actualizar lista
-        </IonButton>
-
-        {loading ? (
-          <div
+          <section
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '2rem',
+              padding: '0 0.5rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <IonSpinner name="crescent" />
-          </div>
-        ) : null}
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Eventos ecológicos
+            </h1>
 
-        {!loading && events.length === 0 ? (
-          <IonText color="medium">
-            <p>No existen eventos registrados actualmente.</p>
-          </IonText>
-        ) : null}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Administra actividades ambientales, jornadas
+                comunitarias, talleres y campañas ecológicas.
+              </p>
+            </IonText>
+          </section>
 
-        {!loading &&
-          events.map((event) => {
-            const isDeleting = deletingId === event.id;
+          <IonCard
+            style={{
+              margin: '0 0.5rem 1.5rem',
+            }}
+          >
+            <IonCardHeader>
+              <IonCardSubtitle>
+                Actividad comunal
+              </IonCardSubtitle>
 
-            return (
-              <IonCard key={event.id}>
-                <IonCardHeader>
-                  <IonCardSubtitle>
-                    Evento #{event.id}
-                  </IonCardSubtitle>
+              <IonCardTitle>
+                {isEditing
+                  ? `Editar evento #${editingId}`
+                  : 'Crear evento'}
+              </IonCardTitle>
+            </IonCardHeader>
 
-                  <IonCardTitle>{event.title}</IonCardTitle>
-                </IonCardHeader>
+            <IonCardContent>
+              <IonList lines="full">
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Título *
+                  </IonLabel>
 
-                <IonCardContent>
-                  <p>{event.description}</p>
+                  <IonInput
+                    value={title}
+                    maxlength={150}
+                    placeholder="Ej. Jornada de limpieza comunitaria"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setTitle(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
 
-                  <p>
-                    <strong>Ubicación:</strong>{' '}
-                    {event.location}
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Descripción *
+                  </IonLabel>
+
+                  <IonTextarea
+                    value={description}
+                    maxlength={2000}
+                    rows={5}
+                    autoGrow
+                    placeholder="Describe la actividad"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setDescription(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Ubicación *
+                  </IonLabel>
+
+                  <IonInput
+                    value={location}
+                    maxlength={200}
+                    placeholder="Ej. Plaza principal de Santo Domingo"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setLocation(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+
+                <IonItem lines="none">
+                  <IonLabel position="stacked">
+                    Fecha y hora *
+                  </IonLabel>
+
+                  <IonDatetime
+                    value={date}
+                    presentation="date-time"
+                    disabled={saving}
+                    onIonChange={(event) => {
+                      const selectedValue =
+                        event.detail.value;
+
+                      if (
+                        typeof selectedValue === 'string'
+                      ) {
+                        setDate(selectedValue);
+                      }
+                    }}
+                  />
+                </IonItem>
+              </IonList>
+
+              <IonNote
+                color="medium"
+                style={{
+                  display: 'block',
+                  marginTop: '1rem',
+                }}
+              >
+                * Campos obligatorios.
+              </IonNote>
+
+              <IonButton
+                expand="block"
+                className="ion-margin-top"
+                disabled={saving}
+                onClick={() =>
+                  void handleSaveEvent()
+                }
+              >
+                {saving
+                  ? 'Guardando...'
+                  : isEditing
+                    ? 'Guardar cambios'
+                    : 'Crear evento'}
+              </IonButton>
+
+              {isEditing ? (
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  color="medium"
+                  disabled={saving}
+                  onClick={handleCancelEdit}
+                >
+                  Cancelar edición
+                </IonButton>
+              ) : null}
+
+              {saving ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '1rem',
+                  }}
+                >
+                  <IonSpinner name="dots" />
+                </div>
+              ) : null}
+            </IonCardContent>
+          </IonCard>
+
+          {successMessage ? (
+            <IonText color="success">
+              <p style={{ padding: '0 0.5rem' }}>
+                {successMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          {errorMessage ? (
+            <IonText color="danger">
+              <p style={{ padding: '0 0.5rem' }}>
+                {errorMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          <section
+            style={{
+              padding: '0 0.5rem',
+              marginBottom: '1rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  Eventos registrados
+                </h2>
+
+                <IonText color="medium">
+                  <p style={{ margin: 0 }}>
+                    {events.length}{' '}
+                    {events.length === 1
+                      ? 'evento registrado'
+                      : 'eventos registrados'}
                   </p>
+                </IonText>
+              </div>
 
-                  <p>
-                    <strong>Fecha:</strong>{' '}
-                    {new Date(event.date).toLocaleString('es-CL')}
-                  </p>
+              <IonButton
+                fill="outline"
+                disabled={loading}
+                onClick={() =>
+                  void loadEvents()
+                }
+              >
+                {loading
+                  ? 'Actualizando...'
+                  : 'Actualizar lista'}
+              </IonButton>
+            </div>
+          </section>
 
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    disabled={saving || isDeleting}
-                    onClick={() => handleStartEdit(event)}
+          {loading ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          ) : null}
+
+          {!loading && events.length === 0 ? (
+            <IonText color="medium">
+              <p style={{ padding: '0 0.5rem' }}>
+                No existen eventos registrados actualmente.
+              </p>
+            </IonText>
+          ) : null}
+
+          {!loading && events.length > 0 ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(340px, 1fr))',
+                gap: '1rem',
+                padding: '0 0.5rem',
+              }}
+            >
+              {events.map((event) => {
+                const isDeleting =
+                  deletingId === event.id;
+
+                return (
+                  <IonCard
+                    key={event.id}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
                   >
-                    Editar
-                  </IonButton>
+                    <IonCardHeader>
+                      <IonCardSubtitle>
+                        Evento #{event.id}
+                      </IonCardSubtitle>
 
-                  <IonButton
-                    size="small"
-                    color="danger"
-                    fill="clear"
-                    disabled={saving || isDeleting}
-                    onClick={() => setEventToDelete(event)}
-                  >
-                    Eliminar
-                  </IonButton>
+                      <IonCardTitle>
+                        {event.title}
+                      </IonCardTitle>
+                    </IonCardHeader>
 
-                  {isDeleting ? (
-                    <IonSpinner
-                      name="dots"
-                      className="ion-margin-start"
-                    />
-                  ) : null}
-                </IonCardContent>
-              </IonCard>
-            );
-          })}
+                    <IonCardContent
+                      style={{
+                        display: 'flex',
+                        flex: 1,
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <p
+                        style={{
+                          marginTop: 0,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {event.description}
+                      </p>
+
+                      <p>
+                        <strong>Ubicación:</strong>{' '}
+                        {event.location}
+                      </p>
+
+                      <IonText color="medium">
+                        <p>
+                          <strong>Fecha:</strong>{' '}
+                          {formatEventDate(event.date)}
+                        </p>
+                      </IonText>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          marginTop: 'auto',
+                        }}
+                      >
+                        <IonButton
+                          size="small"
+                          fill="outline"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            handleStartEdit(event)
+                          }
+                        >
+                          Editar
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="danger"
+                          fill="clear"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            setEventToDelete(event)
+                          }
+                        >
+                          Eliminar
+                        </IonButton>
+
+                        {isDeleting ? (
+                          <IonSpinner name="dots" />
+                        ) : null}
+                      </div>
+                    </IonCardContent>
+                  </IonCard>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </IonContent>
 
       <IonAlert
@@ -498,7 +690,8 @@ const AdminEventsPage = () => {
           {
             text: 'Cancelar',
             role: 'cancel',
-            handler: () => setEventToDelete(null),
+            handler: () =>
+              setEventToDelete(null),
           },
           {
             text: 'Eliminar',

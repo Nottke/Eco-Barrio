@@ -1,3 +1,11 @@
+import type { CSSProperties } from 'react';
+
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+
 import {
   IonAlert,
   IonBadge,
@@ -19,12 +27,6 @@ import {
 } from '@ionic/react';
 
 import {
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
-
-import {
   deleteReport,
   getReports,
   updateReportStatus,
@@ -42,15 +44,36 @@ const STATUS_LABELS: Record<ReportStatus, string> = {
   RESOLVED: 'Resuelto',
 };
 
-const STATUS_COLORS: Record<
-  ReportStatus,
-  'warning' | 'success' | 'danger' | 'primary'
-> = {
-  PENDING: 'warning',
-  APPROVED: 'success',
-  REJECTED: 'danger',
-  RESOLVED: 'primary',
-};
+function getStatusBadgeStyle(
+  status: ReportStatus,
+): CSSProperties {
+  switch (status) {
+    case 'APPROVED':
+      return {
+        backgroundColor: '#2dd36f',
+        color: '#ffffff',
+      };
+
+    case 'RESOLVED':
+      return {
+        backgroundColor: '#198754',
+        color: '#ffffff',
+      };
+
+    case 'REJECTED':
+      return {
+        backgroundColor: '#eb445a',
+        color: '#ffffff',
+      };
+
+    case 'PENDING':
+    default:
+      return {
+        backgroundColor: '#ffc409',
+        color: '#1f1f1f',
+      };
+  }
+}
 
 function getErrorMessage(error: unknown): string {
   if (typeof error === 'string') {
@@ -64,11 +87,28 @@ function getErrorMessage(error: unknown): string {
   return 'No fue posible completar la operación.';
 }
 
+function formatReportDate(dateValue: string): string {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha no disponible';
+  }
+
+  return date.toLocaleString('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
 const AdminReportsPage = () => {
-  const [reports, setReports] = useState<EnvironmentalReport[]>([]);
+  const [reports, setReports] =
+    useState<EnvironmentalReport[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+  const [updatingId, setUpdatingId] =
+    useState<number | null>(null);
 
   const [reportToDelete, setReportToDelete] =
     useState<EnvironmentalReport | null>(null);
@@ -102,10 +142,11 @@ const AdminReportsPage = () => {
     setErrorMessage('');
 
     try {
-      const updatedReport = await updateReportStatus(
-        reportId,
-        status,
-      );
+      const updatedReport =
+        await updateReportStatus(
+          reportId,
+          status,
+        );
 
       setReports((currentReports) =>
         currentReports.map((report) =>
@@ -164,163 +205,283 @@ const AdminReportsPage = () => {
       </IonHeader>
 
       <IonContent fullscreen className="ion-padding">
-        <h1>Reportes ciudadanos</h1>
-
-        <p style={{ opacity: 0.8 }}>
-          Revisa las incidencias ambientales informadas por la comunidad y
-          actualiza su estado.
-        </p>
-
-        <IonButton
-          fill="outline"
-          onClick={() => void loadReports()}
-          disabled={loading}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
         >
-          Actualizar lista
-        </IonButton>
-
-        {errorMessage ? (
-          <IonText color="danger">
-            <p>{errorMessage}</p>
-          </IonText>
-        ) : null}
-
-        {loading ? (
-          <div
+          <section
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '2rem',
+              padding: '0 0.5rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <IonSpinner name="crescent" />
-          </div>
-        ) : null}
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Reportes ciudadanos
+            </h1>
 
-        {!loading && reports.length === 0 ? (
-          <IonText color="medium">
-            <p>No existen reportes registrados actualmente.</p>
-          </IonText>
-        ) : null}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Revisa las incidencias ambientales informadas por la
+                comunidad y actualiza su estado.
+              </p>
+            </IonText>
 
-        {!loading &&
-          reports.map((report) => {
-            const isUpdating = updatingId === report.id;
-            const isDeleting = deletingId === report.id;
+            <IonButton
+              fill="outline"
+              className="ion-margin-top"
+              disabled={loading}
+              onClick={() =>
+                void loadReports()
+              }
+            >
+              {loading
+                ? 'Actualizando...'
+                : 'Actualizar lista'}
+            </IonButton>
+          </section>
 
-            return (
-              <IonCard key={report.id}>
-                <IonCardHeader>
-                  <IonCardSubtitle>
-                    Reporte #{report.id}
-                  </IonCardSubtitle>
+          {errorMessage ? (
+            <IonText color="danger">
+              <p style={{ padding: '0 0.5rem' }}>
+                {errorMessage}
+              </p>
+            </IonText>
+          ) : null}
 
-                  <IonCardTitle>{report.title}</IonCardTitle>
+          {loading ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          ) : null}
 
-                  <IonBadge color={STATUS_COLORS[report.status]}>
-                    {STATUS_LABELS[report.status]}
-                  </IonBadge>
-                </IonCardHeader>
+          {!loading && reports.length === 0 ? (
+            <IonText color="medium">
+              <p style={{ padding: '0 0.5rem' }}>
+                No existen reportes registrados actualmente.
+              </p>
+            </IonText>
+          ) : null}
 
-                <IonCardContent>
-                  <p>{report.description}</p>
+          {!loading && reports.length > 0 ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(340px, 1fr))',
+                gap: '1rem',
+                padding: '0 0.5rem',
+              }}
+            >
+              {reports.map((report) => {
+                const isUpdating =
+                  updatingId === report.id;
 
-                  <p>
-                    <strong>Ubicación:</strong> {report.location}
-                  </p>
+                const isDeleting =
+                  deletingId === report.id;
 
-                  <p>
-                    <strong>Enviado por:</strong>{' '}
-                    {report.user?.name ?? 'Usuario no disponible'}
-                  </p>
+                const isProcessing =
+                  isUpdating || isDeleting;
 
-                  <p>
-                    <strong>Correo:</strong>{' '}
-                    {report.user?.email ?? 'No disponible'}
-                  </p>
-
-                  <p>
-                    <strong>Fecha:</strong>{' '}
-                    {new Date(report.createdAt).toLocaleString('es-CL')}
-                  </p>
-
-                  <IonButton
-                    size="small"
-                    color="success"
-                    disabled={
-                      isUpdating ||
-                      isDeleting ||
-                      report.status === 'APPROVED'
-                    }
-                    onClick={() =>
-                      void handleStatusChange(
-                        report.id,
-                        'APPROVED',
-                      )
-                    }
+                return (
+                  <IonCard
+                    key={report.id}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
                   >
-                    Aprobar
-                  </IonButton>
+                    <IonCardHeader>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent:
+                            'space-between',
+                          alignItems: 'flex-start',
+                          gap: '1rem',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <IonCardSubtitle>
+                          Reporte #{report.id}
+                        </IonCardSubtitle>
 
-                  <IonButton
-                    size="small"
-                    color="danger"
-                    fill="outline"
-                    disabled={
-                      isUpdating ||
-                      isDeleting ||
-                      report.status === 'REJECTED'
-                    }
-                    onClick={() =>
-                      void handleStatusChange(
-                        report.id,
-                        'REJECTED',
-                      )
-                    }
-                  >
-                    Rechazar
-                  </IonButton>
+                        <IonBadge
+                          style={{
+                            ...getStatusBadgeStyle(report.status),
+                            padding: '0.35rem 0.55rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {STATUS_LABELS[report.status]}
+                        </IonBadge>
+                      </div>
 
-                  <IonButton
-                    size="small"
-                    color="primary"
-                    fill="outline"
-                    disabled={
-                      isUpdating ||
-                      isDeleting ||
-                      report.status === 'RESOLVED'
-                    }
-                    onClick={() =>
-                      void handleStatusChange(
-                        report.id,
-                        'RESOLVED',
-                      )
-                    }
-                  >
-                    Marcar resuelto
-                  </IonButton>
+                      <IonCardTitle>
+                        {report.title}
+                      </IonCardTitle>
+                    </IonCardHeader>
 
-                  <IonButton
-                    size="small"
-                    color="danger"
-                    fill="clear"
-                    disabled={isUpdating || isDeleting}
-                    onClick={() => setReportToDelete(report)}
-                  >
-                    Eliminar
-                  </IonButton>
+                    <IonCardContent
+                      style={{
+                        display: 'flex',
+                        flex: 1,
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <p
+                        style={{
+                          marginTop: 0,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {report.description}
+                      </p>
 
-                  {isUpdating || isDeleting ? (
-                    <IonSpinner
-                        name="dots"
-                        className="ion-margin-start"
-                      />
-                  ) : null}
-                </IonCardContent>
-              </IonCard>
-            );
-          })}
+                      <div
+                        style={{
+                          marginBottom: '1.25rem',
+                        }}
+                      >
+                        <p>
+                          <strong>Ubicación:</strong>{' '}
+                          {report.location}
+                        </p>
+
+                        <p>
+                          <strong>Enviado por:</strong>{' '}
+                          {report.user?.name ??
+                            'Usuario no disponible'}
+                        </p>
+
+                        <p>
+                          <strong>Correo:</strong>{' '}
+                          {report.user?.email ??
+                            'No disponible'}
+                        </p>
+
+                        <p style={{ marginBottom: 0 }}>
+                          <strong>Fecha:</strong>{' '}
+                          {formatReportDate(
+                            report.createdAt,
+                          )}
+                        </p>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: 'auto',
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <IonButton
+                          size="small"
+                          color="success"
+                          fill="outline"
+                          disabled={
+                            isProcessing ||
+                            report.status ===
+                              'APPROVED'
+                          }
+                          onClick={() =>
+                            void handleStatusChange(
+                              report.id,
+                              'APPROVED',
+                            )
+                          }
+                        >
+                          Aprobar
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="danger"
+                          fill="outline"
+                          disabled={
+                            isProcessing ||
+                            report.status ===
+                              'REJECTED'
+                          }
+                          onClick={() =>
+                            void handleStatusChange(
+                              report.id,
+                              'REJECTED',
+                            )
+                          }
+                        >
+                          Rechazar
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="primary"
+                          fill="outline"
+                          disabled={
+                            isProcessing ||
+                            report.status ===
+                              'RESOLVED'
+                          }
+                          onClick={() =>
+                            void handleStatusChange(
+                              report.id,
+                              'RESOLVED',
+                            )
+                          }
+                        >
+                          Marcar resuelto
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="danger"
+                          fill="clear"
+                          disabled={isProcessing}
+                          onClick={() =>
+                            setReportToDelete(
+                              report,
+                            )
+                          }
+                        >
+                          Eliminar
+                        </IonButton>
+
+                        {isProcessing ? (
+                          <IonSpinner name="dots" />
+                        ) : null}
+                      </div>
+                    </IonCardContent>
+                  </IonCard>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </IonContent>
+
       <IonAlert
         isOpen={reportToDelete !== null}
         header="Eliminar reporte"
@@ -333,7 +494,8 @@ const AdminReportsPage = () => {
           {
             text: 'Cancelar',
             role: 'cancel',
-            handler: () => setReportToDelete(null),
+            handler: () =>
+              setReportToDelete(null),
           },
           {
             text: 'Eliminar',

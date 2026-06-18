@@ -1,5 +1,4 @@
 import {
-  IonBackButton,
   IonButtons,
   IonHeader,
   IonMenuButton,
@@ -7,37 +6,38 @@ import {
   IonToolbar,
 } from '@ionic/react';
 
-/** Cabecera para pantallas dentro de pestañas (menú lateral). */
-export function CitizenTabHeader({ title }: { title: string }) {
+type CitizenHeaderProps = {
+  title: string;
+};
+
+/** Cabecera para las secciones principales del área ciudadana. */
+export function CitizenTabHeader({
+  title,
+}: CitizenHeaderProps) {
   return (
     <IonHeader>
       <IonToolbar>
         <IonButtons slot="start">
-          <IonMenuButton aria-label="Abrir menú" />
+          <IonMenuButton
+            menu="eco-menu"
+            aria-label="Abrir menú"
+          />
         </IonButtons>
+
         <IonTitle>{title}</IonTitle>
       </IonToolbar>
     </IonHeader>
   );
 }
 
-/** Cabecera para pantallas apiladas desde el menú (volver + menú). */
+/**
+ * Se conserva por compatibilidad con las vistas existentes,
+ * pero usa la misma navegación que las secciones principales.
+ */
 export function CitizenStackHeader({
   title,
-  defaultBackHref = '/app/inicio',
-}: {
-  title: string;
-  defaultBackHref?: string;
-}) {
+}: CitizenHeaderProps) {
   return (
-    <IonHeader>
-      <IonToolbar>
-        <IonButtons slot="start">
-          <IonBackButton defaultHref={defaultBackHref} text="Atrás" />
-          <IonMenuButton aria-label="Abrir menú" />
-        </IonButtons>
-        <IonTitle>{title}</IonTitle>
-      </IonToolbar>
-    </IonHeader>
+    <CitizenTabHeader title={title} />
   );
 }

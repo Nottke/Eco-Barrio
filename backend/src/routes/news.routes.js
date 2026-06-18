@@ -13,6 +13,11 @@ const roleMiddleware = require("../middlewares/role.middleware");
 
 const router = express.Router();
 
+// Lectura pública
+router.get("/", getNews);
+router.get("/:id", getNewsById);
+
+// Gestión exclusiva del administrador
 router.post(
   "/",
   authMiddleware,
@@ -33,8 +38,5 @@ router.delete(
   roleMiddleware("ADMIN"),
   deleteNews
 );
-
-router.get("/", authMiddleware, getNews);
-router.get("/:id", authMiddleware, getNewsById);
 
 module.exports = router;

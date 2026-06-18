@@ -12,7 +12,9 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonSpinner,
   IonText,
@@ -46,6 +48,19 @@ function getErrorMessage(error: unknown): string {
   }
 
   return 'No fue posible completar la operación.';
+}
+
+function formatNewsDate(dateValue: string): string {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha no disponible';
+  }
+
+  return date.toLocaleString('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 }
 
 const AdminNewsPage = () => {
@@ -227,209 +242,370 @@ const AdminNewsPage = () => {
       </IonHeader>
 
       <IonContent fullscreen className="ion-padding">
-        <h1>Noticias ambientales</h1>
-
-        <p style={{ opacity: 0.8 }}>
-          Revisa y administra las noticias y comunicaciones ambientales
-          publicadas para la comunidad.
-        </p>
-
-        <IonCard>
-          <IonCardHeader>
-            <IonCardSubtitle>
-              Publicación ambiental
-            </IonCardSubtitle>
-
-            <IonCardTitle>
-              {isEditing
-                ? `Editar noticia #${editingId}`
-                : 'Crear noticia'}
-            </IonCardTitle>
-          </IonCardHeader>
-
-          <IonCardContent>
-            <IonItem>
-              <IonLabel position="stacked">
-                Título
-              </IonLabel>
-
-              <IonInput
-                value={title}
-                placeholder="Ej. Nueva jornada de reciclaje"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setTitle(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Contenido
-              </IonLabel>
-
-              <IonTextarea
-                value={content}
-                placeholder="Escribe el contenido de la noticia"
-                autoGrow
-                disabled={saving}
-                onIonInput={(event) =>
-                  setContent(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                URL de imagen (opcional)
-              </IonLabel>
-
-              <IonInput
-                type="url"
-                value={imageUrl}
-                placeholder="https://..."
-                disabled={saving}
-                onIonInput={(event) =>
-                  setImageUrl(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonButton
-              expand="block"
-              className="ion-margin-top"
-              disabled={saving}
-              onClick={() => void handleSaveNews()}
-            >
-              {saving
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Publicar noticia'}
-            </IonButton>
-
-            {isEditing ? (
-              <IonButton
-                expand="block"
-                fill="clear"
-                color="medium"
-                disabled={saving}
-                onClick={handleCancelEdit}
-              >
-                Cancelar edición
-              </IonButton>
-            ) : null}
-
-            {saving ? (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  paddingTop: '1rem',
-                }}
-              >
-                <IonSpinner name="dots" />
-              </div>
-            ) : null}
-          </IonCardContent>
-        </IonCard>
-
-        {successMessage ? (
-          <IonText color="success">
-            <p>{successMessage}</p>
-          </IonText>
-        ) : null}
-
-        {errorMessage ? (
-          <IonText color="danger">
-            <p>{errorMessage}</p>
-          </IonText>
-        ) : null}
-
-        <IonButton
-          fill="outline"
-          disabled={loading}
-          onClick={() => void loadNews()}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
         >
-          Actualizar lista
-        </IonButton>
-
-        {loading ? (
-          <div
+          <section
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '2rem',
+              padding: '0 0.5rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <IonSpinner name="crescent" />
-          </div>
-        ) : null}
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Noticias ambientales
+            </h1>
 
-        {!loading && news.length === 0 ? (
-          <IonText color="medium">
-            <p>No existen noticias registradas actualmente.</p>
-          </IonText>
-        ) : null}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Publica, edita y elimina noticias y comunicaciones
+                ambientales dirigidas a la comunidad.
+              </p>
+            </IonText>
+          </section>
 
-        {!loading &&
-          news.map((item) => {
-            const isDeleting = deletingId === item.id;
+          <IonCard
+            style={{
+              margin: '0 0.5rem 1.5rem',
+            }}
+          >
+            <IonCardHeader>
+              <IonCardSubtitle>
+                Publicación ambiental
+              </IonCardSubtitle>
 
-            return (
-              <IonCard key={item.id}>
-                <IonCardHeader>
-                  <IonCardSubtitle>
-                    Noticia #{item.id}
-                  </IonCardSubtitle>
+              <IonCardTitle>
+                {isEditing
+                  ? `Editar noticia #${editingId}`
+                  : 'Crear noticia'}
+              </IonCardTitle>
+            </IonCardHeader>
 
-                  <IonCardTitle>{item.title}</IonCardTitle>
-                </IonCardHeader>
+            <IonCardContent>
+              <IonList lines="full">
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Título *
+                  </IonLabel>
 
-                <IonCardContent>
-                  <p>{item.content}</p>
+                  <IonInput
+                    value={title}
+                    maxlength={150}
+                    placeholder="Ej. Nueva jornada de reciclaje"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setTitle(event.detail.value ?? '')
+                    }
+                  />
+                </IonItem>
 
-                  <p>
-                    <strong>Fecha:</strong>{' '}
-                    {new Date(item.createdAt).toLocaleString('es-CL')}
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Contenido *
+                  </IonLabel>
+
+                  <IonTextarea
+                    value={content}
+                    maxlength={5000}
+                    rows={6}
+                    autoGrow
+                    placeholder="Escribe el contenido de la noticia"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setContent(event.detail.value ?? '')
+                    }
+                  />
+                </IonItem>
+
+                <IonItem lines="none">
+                  <IonLabel position="stacked">
+                    URL de imagen (opcional)
+                  </IonLabel>
+
+                  <IonInput
+                    type="url"
+                    value={imageUrl}
+                    maxlength={500}
+                    placeholder="https://..."
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setImageUrl(event.detail.value ?? '')
+                    }
+                  />
+                </IonItem>
+              </IonList>
+
+              <IonNote
+                color="medium"
+                style={{
+                  display: 'block',
+                  marginTop: '1rem',
+                }}
+              >
+                * Campos obligatorios.
+              </IonNote>
+
+              <IonButton
+                expand="block"
+                className="ion-margin-top"
+                disabled={saving}
+                onClick={() =>
+                  void handleSaveNews()
+                }
+              >
+                {saving
+                  ? 'Guardando...'
+                  : isEditing
+                    ? 'Guardar cambios'
+                    : 'Publicar noticia'}
+              </IonButton>
+
+              {isEditing ? (
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  color="medium"
+                  disabled={saving}
+                  onClick={handleCancelEdit}
+                >
+                  Cancelar edición
+                </IonButton>
+              ) : null}
+
+              {saving ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '1rem',
+                  }}
+                >
+                  <IonSpinner name="dots" />
+                </div>
+              ) : null}
+            </IonCardContent>
+          </IonCard>
+
+          {successMessage ? (
+            <IonText color="success">
+              <p style={{ padding: '0 0.5rem' }}>
+                {successMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          {errorMessage ? (
+            <IonText color="danger">
+              <p style={{ padding: '0 0.5rem' }}>
+                {errorMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          <section
+            style={{
+              padding: '0 0.5rem',
+              marginBottom: '1rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  Noticias publicadas
+                </h2>
+
+                <IonText color="medium">
+                  <p style={{ margin: 0 }}>
+                    {news.length}{' '}
+                    {news.length === 1
+                      ? 'noticia registrada'
+                      : 'noticias registradas'}
                   </p>
+                </IonText>
+              </div>
 
-                  {item.imageUrl ? (
-                    <p>
-                      <strong>Imagen:</strong>{' '}
-                      {item.imageUrl}
-                    </p>
-                  ) : null}
+              <IonButton
+                fill="outline"
+                disabled={loading}
+                onClick={() =>
+                  void loadNews()
+                }
+              >
+                {loading
+                  ? 'Actualizando...'
+                  : 'Actualizar lista'}
+              </IonButton>
+            </div>
+          </section>
 
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    disabled={saving || isDeleting}
-                    onClick={() => handleStartEdit(item)}
+          {loading ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          ) : null}
+
+          {!loading && news.length === 0 ? (
+            <IonText color="medium">
+              <p style={{ padding: '0 0.5rem' }}>
+                No existen noticias registradas actualmente.
+              </p>
+            </IonText>
+          ) : null}
+
+          {!loading && news.length > 0 ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(340px, 1fr))',
+                gap: '1rem',
+                padding: '0 0.5rem',
+              }}
+            >
+              {news.map((item) => {
+                const isDeleting =
+                  deletingId === item.id;
+
+                return (
+                  <IonCard
+                    key={item.id}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      margin: 0,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
                   >
-                    Editar
-                  </IonButton>
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={`Imagen de la noticia: ${item.title}`}
+                        style={{
+                          display: 'block',
+                          width: '100%',
+                          height: '210px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : null}
 
-                  <IonButton
-                    size="small"
-                    color="danger"
-                    fill="clear"
-                    disabled={saving || isDeleting}
-                    onClick={() => setNewsToDelete(item)}
-                  >
-                    Eliminar
-                  </IonButton>
+                    <IonCardHeader>
+                      <IonCardSubtitle>
+                        Noticia #{item.id}
+                      </IonCardSubtitle>
 
-                  {isDeleting ? (
-                    <IonSpinner
-                      name="dots"
-                      className="ion-margin-start"
-                    />
-                  ) : null}
-                </IonCardContent>
-              </IonCard>
-            );
-          })}
+                      <IonCardTitle>
+                        {item.title}
+                      </IonCardTitle>
+                    </IonCardHeader>
+
+                    <IonCardContent
+                      style={{
+                        display: 'flex',
+                        flex: 1,
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <p
+                        style={{
+                          marginTop: 0,
+                          lineHeight: 1.5,
+                          whiteSpace: 'pre-wrap',
+                        }}
+                      >
+                        {item.content}
+                      </p>
+
+                      <IonText color="medium">
+                        <p>
+                          Publicada el{' '}
+                          {formatNewsDate(
+                            item.createdAt,
+                          )}
+                        </p>
+                      </IonText>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          marginTop: 'auto',
+                        }}
+                      >
+                        <IonButton
+                          size="small"
+                          fill="outline"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            handleStartEdit(item)
+                          }
+                        >
+                          Editar
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="danger"
+                          fill="clear"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            setNewsToDelete(item)
+                          }
+                        >
+                          Eliminar
+                        </IonButton>
+
+                        {isDeleting ? (
+                          <IonSpinner name="dots" />
+                        ) : null}
+                      </div>
+                    </IonCardContent>
+                  </IonCard>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </IonContent>
 
       <IonAlert
@@ -444,7 +620,8 @@ const AdminNewsPage = () => {
           {
             text: 'Cancelar',
             role: 'cancel',
-            handler: () => setNewsToDelete(null),
+            handler: () =>
+              setNewsToDelete(null),
           },
           {
             text: 'Eliminar',

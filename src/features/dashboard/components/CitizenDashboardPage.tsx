@@ -8,7 +8,6 @@ import {
   IonCol,
   IonContent,
   IonGrid,
-  IonNote,
   IonPage,
   IonRow,
   IonText,
@@ -17,91 +16,187 @@ import {
 import { useAuth } from '../../auth';
 import { CitizenTabHeader } from '../../../components/CitizenHeaders';
 
+type DashboardCardProps = {
+  subtitle: string;
+  title: string;
+  description: string;
+  buttonText: string;
+  routerLink: string;
+};
+
+const DashboardCard = ({
+  subtitle,
+  title,
+  description,
+  buttonText,
+  routerLink,
+}: DashboardCardProps) => (
+  <IonCard
+    style={{
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      margin: 0,
+    }}
+  >
+    <IonCardHeader>
+      <IonCardSubtitle>{subtitle}</IonCardSubtitle>
+      <IonCardTitle>{title}</IonCardTitle>
+    </IonCardHeader>
+
+    <IonCardContent
+      style={{
+        display: 'flex',
+        flex: 1,
+        flexDirection: 'column',
+      }}
+    >
+      <p
+        style={{
+          marginTop: 0,
+          marginBottom: '1.25rem',
+          lineHeight: 1.5,
+        }}
+      >
+        {description}
+      </p>
+
+      <IonButton
+        expand="block"
+        fill="outline"
+        routerLink={routerLink}
+        style={{
+          marginTop: 'auto',
+        }}
+      >
+        {buttonText}
+      </IonButton>
+    </IonCardContent>
+  </IonCard>
+);
+
 const CitizenDashboardPage = () => {
   const { user } = useAuth();
 
+  const displayName = user?.name?.trim() || 'usuario';
+
   return (
     <IonPage>
-      <CitizenTabHeader title="Inicio — Eco-Barrio" />
+      <CitizenTabHeader title="Inicio" />
+
       <IonContent fullscreen className="ion-padding">
-        <IonText color="medium">
-          <p>
-            Aplicación en desarrollo para la comuna de Santo Domingo.
-          </p>
-        </IonText>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
+        >
+          <section
+            style={{
+              marginBottom: '1.5rem',
+              padding: '0 0.5rem',
+            }}
+          >
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Bienvenido, {displayName}
+            </h1>
 
-        {user?.name ? (
-          <h2 className="ion-margin-top">Hola, {user.name}</h2>
-        ) : (
-          <h2 className="ion-margin-top">Bienvenida o bienvenido</h2>
-        )}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Consulta información ambiental, participa en actividades
+                comunales y reporta situaciones que requieran atención.
+              </p>
+            </IonText>
+          </section>
 
-        <IonNote color="medium" className="ion-margin-vertical">
-          Interfaz priorizada para simplicidad y conectividad variable en sectores
-          rurales.
-        </IonNote>
+          <IonGrid
+            style={{
+              padding: 0,
+            }}
+          >
+            <IonRow>
+              <IonCol
+                size="12"
+                sizeMd="6"
+                style={{
+                  display: 'flex',
+                  padding: '0.5rem',
+                }}
+              >
+                <DashboardCard
+                  subtitle="Participación ciudadana"
+                  title="Reportar un problema ambiental"
+                  description="Informa problemas relacionados con basura, alumbrado, agua, canalización u otras situaciones ambientales."
+                  buttonText="Ver formulario"
+                  routerLink="/app/reportar"
+                />
+              </IonCol>
 
-        <IonGrid>
-          <IonRow>
-            <IonCol size="12" sizeMd="6">
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardSubtitle>Participación</IonCardSubtitle>
-                  <IonCardTitle>Reportar un problema ambiental</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  Basura, alumbrado público, vertederos improvisados… Cuéntanos y
-                  validaremos cuando exista backend.
-                  <IonButton expand="block" className="ion-margin-top" routerLink="/app/reportar">
-                    Ir al formulario
-                  </IonButton>
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-            <IonCol size="12" sizeMd="6">
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardSubtitle>Información útil</IonCardSubtitle>
-                  <IonCardTitle>Puntos de reciclaje y horarios</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  Consulta ubicaciones cercanas desde el menú o aquí mismo.
-                  <IonButton expand="block" fill="outline" className="ion-margin-top" routerLink="/app/reciclaje">
-                    Ver puntos
-                  </IonButton>
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-            <IonCol size="12" sizeMd="6">
-              <IonCard>
-                <IonCardHeader>
-                  <IonCardSubtitle>Fechas próximas</IonCardSubtitle>
-                  <IonCardTitle>Eventos ecológicos</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  Ferias del reciclaje, talleres y campañas de la comuna.
-                  <IonButton expand="block" fill="outline" className="ion-margin-top" routerLink="/app/eventos">
-                    Ver eventos
-                  </IonButton>
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-            <IonCol size="12" sizeMd="6">
-              <IonCard color="secondary">
-                <IonCardHeader>
-                  <IonCardSubtitle>Transparencia</IonCardSubtitle>
-                  <IonCardTitle>Indicadores comunales</IonCardTitle>
-                </IonCardHeader>
-                <IonCardContent>
-                  Resumen amigable (datos ficticios hasta conectar servidor).
-                  <IonButton expand="block" fill="clear" color="primary" routerLink="/app/indicadores">
-                    Explorar
-                  </IonButton>
-                </IonCardContent>
-              </IonCard>
-            </IonCol>
-          </IonRow>
-        </IonGrid>
+              <IonCol
+                size="12"
+                sizeMd="6"
+                style={{
+                  display: 'flex',
+                  padding: '0.5rem',
+                }}
+              >
+                <DashboardCard
+                  subtitle="Información útil"
+                  title="Puntos de reciclaje"
+                  description="Consulta los puntos registrados en la comuna y revisa sus ubicaciones en el mapa interactivo."
+                  buttonText="Ver puntos"
+                  routerLink="/app/reciclaje"
+                />
+              </IonCol>
+
+              <IonCol
+                size="12"
+                sizeMd="6"
+                style={{
+                  display: 'flex',
+                  padding: '0.5rem',
+                }}
+              >
+                <DashboardCard
+                  subtitle="Actividades comunales"
+                  title="Eventos ecológicos"
+                  description="Revisa ferias, talleres, jornadas de limpieza y otras iniciativas ambientales de la comuna."
+                  buttonText="Ver eventos"
+                  routerLink="/app/eventos"
+                />
+              </IonCol>
+
+              <IonCol
+                size="12"
+                sizeMd="6"
+                style={{
+                  display: 'flex',
+                  padding: '0.5rem',
+                }}
+              >
+                <DashboardCard
+                  subtitle="Transparencia ambiental"
+                  title="Indicadores comunales"
+                  description="Consulta información resumida a partir de los reportes, eventos y puntos registrados en Eco-Barrio."
+                  buttonText="Ver indicadores"
+                  routerLink="/app/indicadores"
+                />
+              </IonCol>
+            </IonRow>
+          </IonGrid>
+        </div>
       </IonContent>
     </IonPage>
   );

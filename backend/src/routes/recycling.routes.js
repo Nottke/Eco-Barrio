@@ -13,6 +13,11 @@ const roleMiddleware = require("../middlewares/role.middleware");
 
 const router = express.Router();
 
+// Lectura pública
+router.get("/", getRecyclingPoints);
+router.get("/:id", getRecyclingPointById);
+
+// Gestión exclusiva del administrador
 router.post(
   "/",
   authMiddleware,
@@ -28,14 +33,10 @@ router.put(
 );
 
 router.delete(
-    "/:id",
-    authMiddleware,
-    roleMiddleware("ADMIN"),
-    deleteRecyclingPoint
+  "/:id",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  deleteRecyclingPoint
 );
-
-router.get("/:id", authMiddleware, getRecyclingPointById);
-router.get("/", authMiddleware, getRecyclingPoints);
-
 
 module.exports = router;

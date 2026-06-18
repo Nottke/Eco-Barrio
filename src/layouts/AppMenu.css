@@ -1,0 +1,76 @@
+.eco-menu-content {
+  --padding-top: 1rem;
+}
+
+.eco-menu-user {
+  margin: 0 0.75rem 0.75rem;
+  --padding-start: 0.75rem;
+  --inner-padding-end: 0.75rem;
+  --background: transparent;
+}
+
+.eco-menu-user ion-icon {
+  font-size: 2rem;
+}
+
+.eco-menu-user h2 {
+  margin-bottom: 0.15rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.eco-menu-user p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.eco-menu-description {
+  display: block;
+  padding: 0 1.5rem 1rem;
+  line-height: 1.4;
+}
+
+.eco-menu-list {
+  padding-top: 0;
+  background: transparent;
+}
+
+.eco-menu-option {
+  margin: 0.2rem 0.75rem;
+  overflow: hidden;
+  border-radius: 8px;
+
+  --min-height: 48px;
+  --padding-start: 0.85rem;
+  --inner-padding-end: 0.75rem;
+  --background: transparent;
+  --color: var(--ion-color-dark);
+}
+
+.eco-menu-option ion-icon {
+  color: var(--ion-color-medium);
+}
+
+.eco-menu-option:hover {
+  --background: rgba(var(--ion-color-secondary-rgb), 0.1);
+}
+
+.eco-menu-option-active {
+  font-weight: 600;
+
+  --background: rgba(var(--ion-color-secondary-rgb), 0.2);
+  --color: var(--ion-color-secondary-shade);
+  border-left: 4px solid var(--ion-color-secondary);
+}
+
+.eco-menu-option-active ion-icon {
+  color: var(--ion-color-secondary-shade);
+}
+
+.eco-menu-logout {
+  margin-top: 1rem;
+
+  --min-height: 48px;
+  --padding-start: 1.6rem;
+  --color: var(--ion-color-dark);
+}

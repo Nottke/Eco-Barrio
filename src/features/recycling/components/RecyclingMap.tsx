@@ -59,6 +59,10 @@ function FitMapToPoints({
   const map = useMap();
 
   useEffect(() => {
+    const resizeTimer = window.setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+
     const validCoordinates = points
       .filter((point) =>
         isValidCoordinate(
@@ -76,20 +80,22 @@ function FitMapToPoints({
 
     if (validCoordinates.length === 0) {
       map.setView(DEFAULT_CENTER, 13);
-      return;
-    }
-
-    if (validCoordinates.length === 1) {
+    } else if (validCoordinates.length === 1) {
       map.setView(validCoordinates[0], 15);
-      return;
+    } else {
+      const bounds = L.latLngBounds(
+        validCoordinates,
+      );
+
+      map.fitBounds(bounds, {
+        padding: [40, 40],
+        maxZoom: 16,
+      });
     }
 
-    const bounds = L.latLngBounds(validCoordinates);
-
-    map.fitBounds(bounds, {
-      padding: [40, 40],
-      maxZoom: 16,
-    });
+    return () => {
+      window.clearTimeout(resizeTimer);
+    };
   }, [map, points]);
 
   return null;

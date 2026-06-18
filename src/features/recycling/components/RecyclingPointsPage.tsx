@@ -84,131 +84,220 @@ const RecyclingPointsPage = () => {
       <CitizenStackHeader title="Puntos de reciclaje" />
 
       <IonContent fullscreen className="ion-padding">
-        <h1>Puntos de reciclaje</h1>
-
-        <p style={{ opacity: 0.8 }}>
-          Consulta los puntos de reciclaje registrados en la comuna y
-          revisa su ubicación en el mapa.
-        </p>
-
-        {errorMessage ? (
-          <IonText color="danger">
-            <p>{errorMessage}</p>
-          </IonText>
-        ) : null}
-
-        {loading ? (
-          <div
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
+        >
+          <section
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '2rem',
+              padding: '0 0.5rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <IonSpinner name="crescent" />
-          </div>
-        ) : null}
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Puntos de reciclaje
+            </h1>
 
-        {!loading && points.length === 0 ? (
-          <IonText color="medium">
-            <p>
-              No existen puntos de reciclaje registrados actualmente.
-            </p>
-          </IonText>
-        ) : null}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Consulta los puntos de reciclaje registrados en la
+                comuna y revisa su ubicación en el mapa.
+              </p>
+            </IonText>
+          </section>
 
-        {!loading && points.length > 0 ? (
-          <>
-            <IonCard>
-              <IonCardHeader>
-                <IonCardSubtitle>
-                  Mapa comunal interactivo
-                </IonCardSubtitle>
+          {errorMessage ? (
+            <IonText color="danger">
+              <p style={{ padding: '0 0.5rem' }}>
+                {errorMessage}
+              </p>
+            </IonText>
+          ) : null}
 
-                <IonCardTitle>
-                  Ubicaciones de reciclaje
-                </IonCardTitle>
-              </IonCardHeader>
+          {loading ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          ) : null}
 
-              <IonCardContent>
-                <IonText color="medium">
-                  <p
-                    style={{
-                      marginTop: 0,
-                      marginBottom: '1rem',
-                    }}
-                  >
-                    {pointsWithCoordinates.length}{' '}
-                    {pointsWithCoordinates.length === 1
-                      ? 'punto disponible en el mapa'
-                      : 'puntos disponibles en el mapa'}
-                  </p>
-                </IonText>
+          {!loading && points.length === 0 ? (
+            <IonText color="medium">
+              <p style={{ padding: '0 0.5rem' }}>
+                No existen puntos de reciclaje registrados
+                actualmente.
+              </p>
+            </IonText>
+          ) : null}
 
-                {pointsWithCoordinates.length > 0 ? (
-                  <RecyclingMap points={points} />
-                ) : (
-                  <IonText color="medium">
-                    <p>
-                      Los puntos registrados todavía no poseen
-                      coordenadas válidas para mostrarse en el mapa.
-                    </p>
-                  </IonText>
-                )}
-              </IonCardContent>
-            </IonCard>
-
-            <h2>Listado de puntos</h2>
-
-            <p style={{ opacity: 0.75 }}>
-              {points.length}{' '}
-              {points.length === 1
-                ? 'punto registrado'
-                : 'puntos registrados'}
-            </p>
-
-            {points.map((point) => (
-              <IonCard key={point.id}>
+          {!loading && points.length > 0 ? (
+            <>
+              <IonCard
+                style={{
+                  margin: '0 0.5rem',
+                }}
+              >
                 <IonCardHeader>
                   <IonCardSubtitle>
-                    Punto #{point.id}
+                    Mapa comunal interactivo
                   </IonCardSubtitle>
 
                   <IonCardTitle>
-                    {point.name}
+                    Ubicaciones de reciclaje
                   </IonCardTitle>
                 </IonCardHeader>
 
                 <IonCardContent>
-                  <p>
-                    <strong>Dirección:</strong>{' '}
-                    {point.address}
-                  </p>
-
-                  {point.description ? (
-                    <p>
-                      <strong>Descripción:</strong>{' '}
-                      {point.description}
+                  <IonText color="medium">
+                    <p
+                      style={{
+                        marginTop: 0,
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      {pointsWithCoordinates.length}{' '}
+                      {pointsWithCoordinates.length === 1
+                        ? 'punto disponible en el mapa'
+                        : 'puntos disponibles en el mapa'}
                     </p>
-                  ) : null}
+                  </IonText>
 
-                  {hasValidCoordinates(point) ? (
-                    <p>
-                      <strong>Coordenadas:</strong>{' '}
-                      {point.latitude}, {point.longitude}
-                    </p>
+                  {pointsWithCoordinates.length > 0 ? (
+                    <RecyclingMap
+                      points={pointsWithCoordinates}
+                    />
                   ) : (
                     <IonText color="medium">
                       <p>
-                        Ubicación geográfica no disponible.
+                        Los puntos registrados todavía no poseen
+                        coordenadas válidas para mostrarse en el mapa.
                       </p>
                     </IonText>
                   )}
                 </IonCardContent>
               </IonCard>
-            ))}
-          </>
-        ) : null}
+
+              <section
+                style={{
+                  padding: '0 0.5rem',
+                  marginTop: '2rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  Listado de puntos
+                </h2>
+
+                <IonText color="medium">
+                  <p style={{ margin: 0 }}>
+                    {points.length}{' '}
+                    {points.length === 1
+                      ? 'punto registrado'
+                      : 'puntos registrados'}
+                  </p>
+                </IonText>
+              </section>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap: '1rem',
+                  padding: '0 0.5rem',
+                }}
+              >
+                {points.map((point) => (
+                  <IonCard
+                    key={point.id}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      margin: 0,
+                    }}
+                  >
+                    <IonCardHeader>
+                      <IonCardSubtitle>
+                        Punto #{point.id}
+                      </IonCardSubtitle>
+
+                      <IonCardTitle>
+                        {point.name}
+                      </IonCardTitle>
+                    </IonCardHeader>
+
+                    <IonCardContent>
+                      <p
+                        style={{
+                          marginTop: 0,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <strong>Dirección:</strong>{' '}
+                        {point.address}
+                      </p>
+
+                      {point.description ? (
+                        <p
+                          style={{
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <strong>Descripción:</strong>{' '}
+                          {point.description}
+                        </p>
+                      ) : null}
+
+                      {hasValidCoordinates(point) ? (
+                        <p
+                          style={{
+                            marginBottom: 0,
+                          }}
+                        >
+                          <strong>Coordenadas:</strong>{' '}
+                          {point.latitude}, {point.longitude}
+                        </p>
+                      ) : (
+                        <IonText color="medium">
+                          <p
+                            style={{
+                              marginBottom: 0,
+                            }}
+                          >
+                            Ubicación geográfica no disponible.
+                          </p>
+                        </IonText>
+                      )}
+                    </IonCardContent>
+                  </IonCard>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
       </IonContent>
     </IonPage>
   );

@@ -12,7 +12,9 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonSpinner,
   IonText,
@@ -52,9 +54,62 @@ function getErrorMessage(error: unknown): string {
   return 'No fue posible completar la operación.';
 }
 
+function formatDate(dateValue: string): string {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha no disponible';
+  }
+
+  return date.toLocaleString('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+type AutomaticSummaryCardProps = {
+  subtitle: string;
+  title: string;
+  value: number;
+};
+
+const AutomaticSummaryCard = ({
+  subtitle,
+  title,
+  value,
+}: AutomaticSummaryCardProps) => (
+  <IonCard
+    style={{
+      width: '100%',
+      height: '100%',
+      margin: 0,
+    }}
+  >
+    <IonCardHeader>
+      <IonCardSubtitle>{subtitle}</IonCardSubtitle>
+      <IonCardTitle>{title}</IonCardTitle>
+    </IonCardHeader>
+
+    <IonCardContent>
+      <p
+        style={{
+          margin: 0,
+          fontSize: '1.8rem',
+          fontWeight: 600,
+        }}
+      >
+        {value}
+      </p>
+    </IonCardContent>
+  </IonCard>
+);
+
 const AdminIndicatorsPage = () => {
   const [indicators, setIndicators] =
     useState<EnvironmentalIndicator[]>([]);
+
+  const [automaticData, setAutomaticData] =
+    useState<AutomaticIndicatorsResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -70,9 +125,6 @@ const AdminIndicatorsPage = () => {
 
   const [deletingId, setDeletingId] =
     useState<number | null>(null);
-
-  const [automaticData, setAutomaticData] =
-    useState<AutomaticIndicatorsResponse | null>(null);    
 
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
@@ -139,7 +191,18 @@ const AdminIndicatorsPage = () => {
     const trimmedValue = value.trim();
     const trimmedUnit = unit.trim();
 
-    if (trimmedName.length < 3 || trimmedName.length > 100) {
+    if (!trimmedName || !trimmedValue || !trimmedUnit) {
+      setErrorMessage(
+        'El nombre, el valor y la unidad son obligatorios.',
+      );
+      setSuccessMessage('');
+      return;
+    }
+
+    if (
+      trimmedName.length < 3 ||
+      trimmedName.length > 100
+    ) {
       setErrorMessage(
         'El nombre debe tener entre 3 y 100 caracteres.',
       );
@@ -155,18 +218,20 @@ const AdminIndicatorsPage = () => {
       return;
     }
 
-    if (!trimmedName || !trimmedValue || !trimmedUnit) {
+    const numericValue = Number(trimmedValue);
+
+    if (!Number.isFinite(numericValue)) {
       setErrorMessage(
-        'El nombre, el valor y la unidad son obligatorios.',
+        'El valor debe ser numérico.',
       );
       setSuccessMessage('');
       return;
     }
 
-    const numericValue = Number(trimmedValue);
-
     if (numericValue < 0) {
-      setErrorMessage('El valor no puede ser negativo.');
+      setErrorMessage(
+        'El valor no puede ser negativo.',
+      );
       setSuccessMessage('');
       return;
     }
@@ -174,14 +239,6 @@ const AdminIndicatorsPage = () => {
     if (numericValue > 1_000_000_000) {
       setErrorMessage(
         'El valor supera el máximo permitido.',
-      );
-      setSuccessMessage('');
-      return;
-    }
-
-    if (!Number.isFinite(numericValue)) {
-      setErrorMessage(
-        'El valor debe ser numérico.',
       );
       setSuccessMessage('');
       return;
@@ -264,6 +321,7 @@ const AdminIndicatorsPage = () => {
       }
 
       setIndicatorToDelete(null);
+
       setSuccessMessage(
         'Indicador eliminado correctamente.',
       );
@@ -289,298 +347,473 @@ const AdminIndicatorsPage = () => {
       </IonHeader>
 
       <IonContent fullscreen className="ion-padding">
-        <h1>Indicadores ambientales</h1>
-
-        <p style={{ opacity: 0.8 }}>
-          Administra indicadores manuales relacionados con el
-          desempeño ambiental y la participación comunal.
-        </p>
-
-        {automaticData ? (
-          <>
-            <h2>Resumen automático del sistema</h2>
-
-            <p style={{ opacity: 0.75 }}>
-              Calculado desde los datos reales registrados en Eco-Barrio.
-            </p>
-
-            <IonCard>
-              <IonCardHeader>
-                <IonCardSubtitle>Reportes ciudadanos</IonCardSubtitle>
-                <IonCardTitle>
-                  {automaticData.indicators.totalReports} reportes
-                </IonCardTitle>
-              </IonCardHeader>
-
-              <IonCardContent>
-                <p>
-                  Pendientes: {automaticData.indicators.pendingReports}
-                </p>
-                <p>
-                  Aprobados: {automaticData.indicators.approvedReports}
-                </p>
-                <p>
-                  Rechazados: {automaticData.indicators.rejectedReports}
-                </p>
-                <p>
-                  Resueltos: {automaticData.indicators.resolvedReports}
-                </p>
-              </IonCardContent>
-            </IonCard>
-
-            <IonCard>
-              <IonCardHeader>
-                <IonCardSubtitle>Contenido y participación</IonCardSubtitle>
-                <IonCardTitle>Actividad comunal</IonCardTitle>
-              </IonCardHeader>
-
-              <IonCardContent>
-                <p>
-                  Noticias publicadas: {automaticData.indicators.totalNews}
-                </p>
-                <p>
-                  Eventos próximos: {automaticData.indicators.upcomingEvents}
-                </p>
-                <p>
-                  Puntos de reciclaje: {automaticData.indicators.totalRecyclingPoints}
-                </p>
-              </IonCardContent>
-            </IonCard>
-
-            <IonText color="medium">
-              <p style={{ fontSize: '0.9rem' }}>
-                Última actualización:{' '}
-                {new Date(
-                  automaticData.generatedAt,
-                ).toLocaleString('es-CL')}
-              </p>
-            </IonText>
-          </>
-        ) : null}
-
-        <IonCard>
-          <IonCardHeader>
-            <IonCardSubtitle>
-              Información ambiental
-            </IonCardSubtitle>
-
-            <IonCardTitle>
-              {isEditing
-                ? `Editar indicador #${editingId}`
-                : 'Crear indicador'}
-            </IonCardTitle>
-          </IonCardHeader>
-
-          <IonCardContent>
-            <IonItem>
-              <IonLabel position="stacked">
-                Nombre *
-              </IonLabel>
-
-              <IonInput
-                value={name}
-                placeholder="Ej. Participación ciudadana"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setName(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Valor *
-              </IonLabel>
-
-              <IonInput
-                type="number"
-                value={value}
-                placeholder="Ej. 150"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setValue(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Unidad *
-              </IonLabel>
-
-              <IonInput
-                value={unit}
-                placeholder="Ej. personas, %, puntos"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setUnit(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonText color="medium">
-              <p style={{ fontSize: '0.9rem' }}>
-                * Campos obligatorios
-              </p>
-            </IonText>
-
-            <IonButton
-              expand="block"
-              className="ion-margin-top"
-              disabled={saving}
-              onClick={() =>
-                void handleSaveIndicator()
-              }
-            >
-              {saving
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Crear indicador'}
-            </IonButton>
-
-            {isEditing ? (
-              <IonButton
-                expand="block"
-                fill="clear"
-                color="medium"
-                disabled={saving}
-                onClick={handleCancelEdit}
-              >
-                Cancelar edición
-              </IonButton>
-            ) : null}
-
-            {saving ? (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  paddingTop: '1rem',
-                }}
-              >
-                <IonSpinner name="dots" />
-              </div>
-            ) : null}
-          </IonCardContent>
-        </IonCard>
-
-        {successMessage ? (
-          <IonText color="success">
-            <p>{successMessage}</p>
-          </IonText>
-        ) : null}
-
-        {errorMessage ? (
-          <IonText color="danger">
-            <p>{errorMessage}</p>
-          </IonText>
-        ) : null}
-
-        <IonButton
-          fill="outline"
-          disabled={loading}
-          onClick={() =>
-            void loadIndicators()
-          }
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
         >
-          Actualizar lista
-        </IonButton>
-
-        {loading ? (
-          <div
+          <section
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '2rem',
+              padding: '0 0.5rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <IonSpinner name="crescent" />
-          </div>
-        ) : null}
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Indicadores ambientales
+            </h1>
 
-        {!loading &&
-        indicators.length === 0 ? (
-          <IonText color="medium">
-            <p>
-              No existen indicadores registrados actualmente.
-            </p>
-          </IonText>
-        ) : null}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Consulta el resumen automático del sistema y administra
+                indicadores ambientales publicados manualmente.
+              </p>
+            </IonText>
+          </section>
 
-        {!loading &&
-          indicators.map((indicator) => {
-            const isDeleting =
-              deletingId === indicator.id;
+          {automaticData ? (
+            <section
+              style={{
+                marginBottom: '2rem',
+              }}
+            >
+              <div
+                style={{
+                  padding: '0 0.5rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  Resumen automático del sistema
+                </h2>
 
-            return (
-              <IonCard key={indicator.id}>
-                <IonCardHeader>
-                  <IonCardSubtitle>
-                    Indicador #{indicator.id}
-                  </IonCardSubtitle>
-
-                  <IonCardTitle>
-                    {indicator.name}
-                  </IonCardTitle>
-                </IonCardHeader>
-
-                <IonCardContent>
-                  <p>
-                    <strong>Valor:</strong>{' '}
-                    {indicator.value}{' '}
-                    {indicator.unit}
+                <IonText color="medium">
+                  <p style={{ margin: 0 }}>
+                    Calculado desde los datos reales registrados en
+                    Eco-Barrio.
                   </p>
+                </IonText>
+              </div>
 
-                  <p>
-                    <strong>Creado:</strong>{' '}
-                    {indicator.createdAt &&
-                    !Number.isNaN(
-                      new Date(
-                        indicator.createdAt,
-                      ).getTime(),
-                    )
-                      ? new Date(
-                          indicator.createdAt,
-                        ).toLocaleString('es-CL')
-                      : 'Fecha no disponible'}
-                  </p>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '1rem',
+                  padding: '0 0.5rem',
+                }}
+              >
+                <AutomaticSummaryCard
+                  subtitle="Participación ciudadana"
+                  title="Reportes registrados"
+                  value={
+                    automaticData.indicators.totalReports
+                  }
+                />
 
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    disabled={saving || isDeleting}
-                    onClick={() =>
-                      handleStartEdit(indicator)
-                    }
-                  >
-                    Editar
-                  </IonButton>
+                <AutomaticSummaryCard
+                  subtitle="Gestión ambiental"
+                  title="Reportes pendientes"
+                  value={
+                    automaticData.indicators.pendingReports
+                  }
+                />
 
-                  <IonButton
-                    size="small"
-                    color="danger"
-                    fill="clear"
-                    disabled={saving || isDeleting}
-                    onClick={() =>
-                      setIndicatorToDelete(
-                        indicator,
+                <AutomaticSummaryCard
+                  subtitle="Gestión ambiental"
+                  title="Reportes resueltos"
+                  value={
+                    automaticData.indicators.resolvedReports
+                  }
+                />
+
+                <AutomaticSummaryCard
+                  subtitle="Información comunal"
+                  title="Noticias publicadas"
+                  value={
+                    automaticData.indicators.totalNews
+                  }
+                />
+
+                <AutomaticSummaryCard
+                  subtitle="Actividades comunales"
+                  title="Eventos próximos"
+                  value={
+                    automaticData.indicators.upcomingEvents
+                  }
+                />
+
+                <AutomaticSummaryCard
+                  subtitle="Infraestructura ambiental"
+                  title="Puntos de reciclaje"
+                  value={
+                    automaticData.indicators
+                      .totalRecyclingPoints
+                  }
+                />
+              </div>
+
+              <IonText color="medium">
+                <p
+                  style={{
+                    padding: '0 0.5rem',
+                    marginTop: '1rem',
+                    marginBottom: 0,
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  Última actualización:{' '}
+                  {formatDate(
+                    automaticData.generatedAt,
+                  )}
+                </p>
+              </IonText>
+            </section>
+          ) : null}
+
+          <IonCard
+            style={{
+              margin: '0 0.5rem 1.5rem',
+            }}
+          >
+            <IonCardHeader>
+              <IonCardSubtitle>
+                Información ambiental
+              </IonCardSubtitle>
+
+              <IonCardTitle>
+                {isEditing
+                  ? `Editar indicador #${editingId}`
+                  : 'Crear indicador'}
+              </IonCardTitle>
+            </IonCardHeader>
+
+            <IonCardContent>
+              <IonList lines="full">
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Nombre *
+                  </IonLabel>
+
+                  <IonInput
+                    value={name}
+                    maxlength={100}
+                    placeholder="Ej. Participación ciudadana"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setName(
+                        event.detail.value ?? '',
                       )
                     }
-                  >
-                    Eliminar
-                  </IonButton>
+                  />
+                </IonItem>
 
-                  {isDeleting ? (
-                    <IonSpinner
-                      name="dots"
-                      className="ion-margin-start"
-                    />
-                  ) : null}
-                </IonCardContent>
-              </IonCard>
-            );
-          })}
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Valor *
+                  </IonLabel>
+
+                  <IonInput
+                    type="number"
+                    value={value}
+                    min="0"
+                    max="1000000000"
+                    step="any"
+                    placeholder="Ej. 150"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setValue(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+
+                <IonItem lines="none">
+                  <IonLabel position="stacked">
+                    Unidad *
+                  </IonLabel>
+
+                  <IonInput
+                    value={unit}
+                    maxlength={30}
+                    placeholder="Ej. personas, %, puntos"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setUnit(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+              </IonList>
+
+              <IonNote
+                color="medium"
+                style={{
+                  display: 'block',
+                  marginTop: '1rem',
+                }}
+              >
+                * Campos obligatorios.
+              </IonNote>
+
+              <IonButton
+                expand="block"
+                className="ion-margin-top"
+                disabled={saving}
+                onClick={() =>
+                  void handleSaveIndicator()
+                }
+              >
+                {saving
+                  ? 'Guardando...'
+                  : isEditing
+                    ? 'Guardar cambios'
+                    : 'Crear indicador'}
+              </IonButton>
+
+              {isEditing ? (
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  color="medium"
+                  disabled={saving}
+                  onClick={handleCancelEdit}
+                >
+                  Cancelar edición
+                </IonButton>
+              ) : null}
+
+              {saving ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '1rem',
+                  }}
+                >
+                  <IonSpinner name="dots" />
+                </div>
+              ) : null}
+            </IonCardContent>
+          </IonCard>
+
+          {successMessage ? (
+            <IonText color="success">
+              <p style={{ padding: '0 0.5rem' }}>
+                {successMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          {errorMessage ? (
+            <IonText color="danger">
+              <p style={{ padding: '0 0.5rem' }}>
+                {errorMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          <section
+            style={{
+              padding: '0 0.5rem',
+              marginBottom: '1rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  Indicadores publicados
+                </h2>
+
+                <IonText color="medium">
+                  <p style={{ margin: 0 }}>
+                    {indicators.length}{' '}
+                    {indicators.length === 1
+                      ? 'indicador registrado'
+                      : 'indicadores registrados'}
+                  </p>
+                </IonText>
+              </div>
+
+              <IonButton
+                fill="outline"
+                disabled={loading}
+                onClick={() =>
+                  void loadIndicators()
+                }
+              >
+                {loading
+                  ? 'Actualizando...'
+                  : 'Actualizar lista'}
+              </IonButton>
+            </div>
+          </section>
+
+          {loading ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          ) : null}
+
+          {!loading && indicators.length === 0 ? (
+            <IonText color="medium">
+              <p style={{ padding: '0 0.5rem' }}>
+                No existen indicadores registrados actualmente.
+              </p>
+            </IonText>
+          ) : null}
+
+          {!loading && indicators.length > 0 ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '1rem',
+                padding: '0 0.5rem',
+              }}
+            >
+              {indicators.map((indicator) => {
+                const isDeleting =
+                  deletingId === indicator.id;
+
+                return (
+                  <IonCard
+                    key={indicator.id}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <IonCardHeader>
+                      <IonCardSubtitle>
+                        Indicador #{indicator.id}
+                      </IonCardSubtitle>
+
+                      <IonCardTitle>
+                        {indicator.name}
+                      </IonCardTitle>
+                    </IonCardHeader>
+
+                    <IonCardContent
+                      style={{
+                        display: 'flex',
+                        flex: 1,
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <p
+                        style={{
+                          marginTop: 0,
+                          fontSize: '1.65rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {indicator.value}{' '}
+                        {indicator.unit}
+                      </p>
+
+                      <IonText color="medium">
+                        <p>
+                          Creado el{' '}
+                          {formatDate(
+                            indicator.createdAt,
+                          )}
+                        </p>
+                      </IonText>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          marginTop: 'auto',
+                        }}
+                      >
+                        <IonButton
+                          size="small"
+                          fill="outline"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            handleStartEdit(
+                              indicator,
+                            )
+                          }
+                        >
+                          Editar
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="danger"
+                          fill="clear"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            setIndicatorToDelete(
+                              indicator,
+                            )
+                          }
+                        >
+                          Eliminar
+                        </IonButton>
+
+                        {isDeleting ? (
+                          <IonSpinner name="dots" />
+                        ) : null}
+                      </div>
+                    </IonCardContent>
+                  </IonCard>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </IonContent>
 
       <IonAlert

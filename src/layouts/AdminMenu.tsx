@@ -1,4 +1,7 @@
-import { useHistory } from 'react-router-dom';
+import {
+  useHistory,
+  useLocation,
+} from 'react-router-dom';
 
 import {
   IonContent,
@@ -27,21 +30,72 @@ import {
 
 import { useAuth } from '../features/auth';
 
+import './AdminMenu.css';
+
 type Props = {
   menuId?: string;
   contentId?: string;
 };
+
+type AdminMenuOption = {
+  label: string;
+  path: string;
+  icon: string;
+};
+
+const ADMIN_MENU_OPTIONS: AdminMenuOption[] = [
+  {
+    label: 'Panel administrativo',
+    path: '/app/admin',
+    icon: shieldCheckmarkOutline,
+  },
+  {
+    label: 'Gestionar reportes',
+    path: '/app/admin/reportes',
+    icon: documentTextOutline,
+  },
+  {
+    label: 'Gestionar noticias',
+    path: '/app/admin/noticias',
+    icon: newspaperOutline,
+  },
+  {
+    label: 'Gestionar eventos',
+    path: '/app/admin/eventos',
+    icon: calendarOutline,
+  },
+  {
+    label: 'Gestionar reciclaje',
+    path: '/app/admin/reciclaje',
+    icon: mapOutline,
+  },
+  {
+    label: 'Gestionar indicadores',
+    path: '/app/admin/indicadores',
+    icon: analyticsOutline,
+  },
+];
 
 export function AdminMenu({
   menuId = 'eco-admin-menu',
   contentId = 'eco-admin-main',
 }: Props) {
   const { logout, user } = useAuth();
+
   const history = useHistory();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     history.replace('/login');
+  };
+
+  const isActiveRoute = (path: string): boolean => {
+    if (path === '/app/admin') {
+      return location.pathname === '/app/admin';
+    }
+
+    return location.pathname.startsWith(path);
   };
 
   return (
@@ -56,11 +110,11 @@ export function AdminMenu({
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding-top">
+      <IonContent className="eco-admin-menu-content">
         {user?.name ? (
           <IonItem
             lines="none"
-            className="ion-margin-bottom"
+            className="eco-admin-menu-user"
           >
             <IonIcon
               icon={personCircleOutline}
@@ -69,83 +123,60 @@ export function AdminMenu({
             />
 
             <IonLabel>
-              <h2>Administrador</h2>
+              <h2>Bienvenido, administrador</h2>
               <p>{user.name}</p>
             </IonLabel>
           </IonItem>
         ) : null}
 
         <IonNote
-          className="ion-padding-horizontal ion-margin-bottom"
+          className="eco-admin-menu-description"
           color="medium"
         >
-          Gestión ambiental comunal de Santo Domingo.
+          Gestión ambiental comunal de Santo Domingo
         </IonNote>
 
-        <IonList lines="none">
+        <IonList
+          lines="none"
+          className="eco-admin-menu-list"
+        >
           <IonMenuToggle autoHide={false}>
-            <IonItem
-              routerLink="/app/admin"
-              routerDirection="root"
-            >
-              <IonIcon
-                icon={shieldCheckmarkOutline}
-                slot="start"
-                aria-hidden
-              />
-              <IonLabel>Panel administrativo</IonLabel>
-            </IonItem>
+            {ADMIN_MENU_OPTIONS.map((option) => {
+              const isActive =
+                isActiveRoute(option.path);
 
-            <IonItem routerLink="/app/admin/reportes">
-              <IonIcon
-                icon={documentTextOutline}
-                slot="start"
-                aria-hidden
-              />
-              <IonLabel>Gestionar reportes</IonLabel>
-            </IonItem>
+              return (
+                <IonItem
+                  key={option.path}
+                  routerLink={option.path}
+                  routerDirection="root"
+                  detail={false}
+                  aria-current={
+                    isActive ? 'page' : undefined
+                  }
+                  className={
+                    isActive
+                      ? 'eco-admin-menu-option eco-admin-menu-option-active'
+                      : 'eco-admin-menu-option'
+                  }
+                >
+                  <IonIcon
+                    icon={option.icon}
+                    slot="start"
+                    aria-hidden
+                  />
 
-            <IonItem routerLink="/app/admin/noticias">
-              <IonIcon
-                icon={newspaperOutline}
-                slot="start"
-                aria-hidden
-              />
-              <IonLabel>Gestionar noticias</IonLabel>
-            </IonItem>
-
-            <IonItem routerLink="/app/admin/eventos">
-              <IonIcon
-                icon={calendarOutline}
-                slot="start"
-                aria-hidden
-              />
-              <IonLabel>Gestionar eventos</IonLabel>
-            </IonItem>
-
-            <IonItem routerLink="/app/admin/reciclaje">
-              <IonIcon
-                icon={mapOutline}
-                slot="start"
-                aria-hidden
-              />
-              <IonLabel>Gestionar reciclaje</IonLabel>
-            </IonItem>
-
-            <IonItem routerLink="/app/admin/indicadores">
-              <IonIcon
-                icon={analyticsOutline}
-                slot="start"
-                aria-hidden
-              />
-              <IonLabel>Gestionar indicadores</IonLabel>
-            </IonItem>
+                  <IonLabel>{option.label}</IonLabel>
+                </IonItem>
+              );
+            })}
           </IonMenuToggle>
 
           <IonItem
             button
             detail={false}
             lines="full"
+            className="eco-admin-menu-logout"
             onClick={handleLogout}
           >
             <IonIcon
@@ -153,6 +184,7 @@ export function AdminMenu({
               slot="start"
               aria-hidden
             />
+
             <IonLabel>Cerrar sesión</IonLabel>
           </IonItem>
         </IonList>

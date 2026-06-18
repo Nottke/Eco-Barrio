@@ -12,7 +12,9 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonSpinner,
   IonText,
@@ -67,8 +69,23 @@ function parseOptionalCoordinate(
     : Number.NaN;
 }
 
+function formatCreatedAt(dateValue: string): string {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'Fecha no disponible';
+  }
+
+  return date.toLocaleString('es-CL', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
 const AdminRecyclingPage = () => {
-  const [points, setPoints] = useState<RecyclingPoint[]>([]);
+  const [points, setPoints] =
+    useState<RecyclingPoint[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -123,16 +140,19 @@ const AdminRecyclingPage = () => {
     setEditingId(point.id);
     setName(point.name);
     setAddress(point.address);
+
     setLatitude(
       point.latitude !== null
         ? String(point.latitude)
         : '',
     );
+
     setLongitude(
       point.longitude !== null
         ? String(point.longitude)
         : '',
     );
+
     setDescription(point.description ?? '');
 
     setErrorMessage('');
@@ -163,6 +183,36 @@ const AdminRecyclingPage = () => {
       return;
     }
 
+    if (
+      trimmedName.length < 3 ||
+      trimmedName.length > 100
+    ) {
+      setErrorMessage(
+        'El nombre debe tener entre 3 y 100 caracteres.',
+      );
+      setSuccessMessage('');
+      return;
+    }
+
+    if (
+      trimmedAddress.length < 5 ||
+      trimmedAddress.length > 200
+    ) {
+      setErrorMessage(
+        'La dirección debe tener entre 5 y 200 caracteres.',
+      );
+      setSuccessMessage('');
+      return;
+    }
+
+    if (trimmedDescription.length > 500) {
+      setErrorMessage(
+        'La descripción no puede superar los 500 caracteres.',
+      );
+      setSuccessMessage('');
+      return;
+    }
+
     const parsedLatitude =
       parseOptionalCoordinate(latitude);
 
@@ -185,10 +235,23 @@ const AdminRecyclingPage = () => {
       return;
     }
 
+    const hasLatitude = parsedLatitude !== null;
+    const hasLongitude = parsedLongitude !== null;
+
+    if (hasLatitude !== hasLongitude) {
+      setErrorMessage(
+        'Debes ingresar latitud y longitud juntas.',
+      );
+      setSuccessMessage('');
+      return;
+    }
+
     if (
       parsedLatitude !== null &&
-      (parsedLatitude < -90 ||
-        parsedLatitude > 90)
+      (
+        parsedLatitude < -90 ||
+        parsedLatitude > 90
+      )
     ) {
       setErrorMessage(
         'La latitud debe estar entre -90 y 90.',
@@ -199,8 +262,10 @@ const AdminRecyclingPage = () => {
 
     if (
       parsedLongitude !== null &&
-      (parsedLongitude < -180 ||
-        parsedLongitude > 180)
+      (
+        parsedLongitude < -180 ||
+        parsedLongitude > 180
+      )
     ) {
       setErrorMessage(
         'La longitud debe estar entre -180 y 180.',
@@ -287,6 +352,7 @@ const AdminRecyclingPage = () => {
       }
 
       setPointToDelete(null);
+
       setSuccessMessage(
         'Punto de reciclaje eliminado correctamente.',
       );
@@ -312,264 +378,420 @@ const AdminRecyclingPage = () => {
       </IonHeader>
 
       <IonContent fullscreen className="ion-padding">
-        <h1>Puntos de reciclaje</h1>
-
-        <p style={{ opacity: 0.8 }}>
-          Administra ubicaciones, direcciones y coordenadas de los puntos de reciclaje de Santo Domingo.
-        </p>
-
-        <IonCard>
-          <IonCardHeader>
-            <IonCardSubtitle>
-              Infraestructura ambiental
-            </IonCardSubtitle>
-
-            <IonCardTitle>
-              {isEditing
-                ? `Editar punto #${editingId}`
-                : 'Crear punto de reciclaje'}
-            </IonCardTitle>
-          </IonCardHeader>
-
-          <IonCardContent>
-            <IonItem>
-              <IonLabel position="stacked">
-                Nombre
-              </IonLabel>
-
-              <IonInput
-                value={name}
-                placeholder="Ej. Punto limpio municipal"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setName(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Dirección
-              </IonLabel>
-
-              <IonInput
-                value={address}
-                placeholder="Ej. Av. Principal 123"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setAddress(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Latitud (opcional)
-              </IonLabel>
-
-              <IonInput
-                type="number"
-                value={latitude}
-                placeholder="-33.635"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setLatitude(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Longitud (opcional)
-              </IonLabel>
-
-              <IonInput
-                type="number"
-                value={longitude}
-                placeholder="-71.615"
-                disabled={saving}
-                onIonInput={(event) =>
-                  setLongitude(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonItem>
-              <IonLabel position="stacked">
-                Descripción (opcional)
-              </IonLabel>
-
-              <IonTextarea
-                value={description}
-                placeholder="Información adicional, horarios o residuos aceptados"
-                autoGrow
-                disabled={saving}
-                onIonInput={(event) =>
-                  setDescription(event.detail.value ?? '')
-                }
-              />
-            </IonItem>
-
-            <IonButton
-              expand="block"
-              className="ion-margin-top"
-              disabled={saving}
-              onClick={() => void handleSavePoint()}
-            >
-              {saving
-                ? 'Guardando...'
-                : isEditing
-                  ? 'Guardar cambios'
-                  : 'Crear punto'}
-            </IonButton>
-
-            {isEditing ? (
-              <IonButton
-                expand="block"
-                fill="clear"
-                color="medium"
-                disabled={saving}
-                onClick={handleCancelEdit}
-              >
-                Cancelar edición
-              </IonButton>
-            ) : null}
-
-            {saving ? (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  paddingTop: '1rem',
-                }}
-              >
-                <IonSpinner name="dots" />
-              </div>
-            ) : null}
-          </IonCardContent>
-        </IonCard>
-
-        {successMessage ? (
-          <IonText color="success">
-            <p>{successMessage}</p>
-          </IonText>
-        ) : null}
-
-        {errorMessage ? (
-          <IonText color="danger">
-            <p>{errorMessage}</p>
-          </IonText>
-        ) : null}
-
-        <IonButton
-          fill="outline"
-          disabled={loading}
-          onClick={() => void loadPoints()}
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '1280px',
+            margin: '0 auto',
+          }}
         >
-          Actualizar lista
-        </IonButton>
-
-        {loading ? (
-          <div
+          <section
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '2rem',
+              padding: '0 0.5rem',
+              marginBottom: '1.5rem',
             }}
           >
-            <IonSpinner name="crescent" />
-          </div>
-        ) : null}
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+              }}
+            >
+              Puntos de reciclaje
+            </h1>
 
-        {!loading && points.length === 0 ? (
-          <IonText color="medium">
-            <p>
-              No existen puntos de reciclaje registrados actualmente.
-            </p>
-          </IonText>
-        ) : null}
+            <IonText color="medium">
+              <p
+                style={{
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Administra las ubicaciones, direcciones y coordenadas
+                de los puntos de reciclaje de Santo Domingo.
+              </p>
+            </IonText>
+          </section>
 
-        {!loading &&
-          points.map((point) => {
-            const isDeleting =
-              deletingId === point.id;
+          <IonCard
+            style={{
+              margin: '0 0.5rem 1.5rem',
+            }}
+          >
+            <IonCardHeader>
+              <IonCardSubtitle>
+                Infraestructura ambiental
+              </IonCardSubtitle>
 
-            return (
-              <IonCard key={point.id}>
-                <IonCardHeader>
-                  <IonCardSubtitle>
-                    Punto #{point.id}
-                  </IonCardSubtitle>
+              <IonCardTitle>
+                {isEditing
+                  ? `Editar punto #${editingId}`
+                  : 'Crear punto de reciclaje'}
+              </IonCardTitle>
+            </IonCardHeader>
 
-                  <IonCardTitle>
-                    {point.name}
-                  </IonCardTitle>
-                </IonCardHeader>
+            <IonCardContent>
+              <IonList lines="full">
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Nombre *
+                  </IonLabel>
 
-                <IonCardContent>
-                  <p>
-                    <strong>Dirección:</strong>{' '}
-                    {point.address}
-                  </p>
-
-                  {point.description ? (
-                    <p>{point.description}</p>
-                  ) : null}
-
-                  {point.latitude !== null &&
-                  point.longitude !== null ? (
-                    <p>
-                      <strong>Coordenadas:</strong>{' '}
-                      {point.latitude},{' '}
-                      {point.longitude}
-                    </p>
-                  ) : (
-                    <p>
-                      <strong>Coordenadas:</strong>{' '}
-                      No registradas
-                    </p>
-                  )}
-
-                  <p>
-                    <strong>Creado:</strong>{' '}
-                    {new Date(
-                      point.createdAt,
-                    ).toLocaleString('es-CL')}
-                  </p>
-
-                  <IonButton
-                    size="small"
-                    fill="outline"
-                    disabled={saving || isDeleting}
-                    onClick={() =>
-                      handleStartEdit(point)
+                  <IonInput
+                    value={name}
+                    maxlength={100}
+                    placeholder="Ej. Punto limpio municipal"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setName(
+                        event.detail.value ?? '',
+                      )
                     }
-                  >
-                    Editar
-                  </IonButton>
+                  />
+                </IonItem>
 
-                  <IonButton
-                    size="small"
-                    color="danger"
-                    fill="clear"
-                    disabled={saving || isDeleting}
-                    onClick={() =>
-                      setPointToDelete(point)
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Dirección *
+                  </IonLabel>
+
+                  <IonInput
+                    value={address}
+                    maxlength={200}
+                    placeholder="Ej. Av. Principal 123"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setAddress(
+                        event.detail.value ?? '',
+                      )
                     }
-                  >
-                    Eliminar
-                  </IonButton>
+                  />
+                </IonItem>
 
-                  {isDeleting ? (
-                    <IonSpinner
-                      name="dots"
-                      className="ion-margin-start"
-                    />
-                  ) : null}
-                </IonCardContent>
-              </IonCard>
-            );
-          })}
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Latitud (opcional)
+                  </IonLabel>
+
+                  <IonInput
+                    type="number"
+                    value={latitude}
+                    min="-90"
+                    max="90"
+                    step="any"
+                    placeholder="-33.635"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setLatitude(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+
+                <IonItem>
+                  <IonLabel position="stacked">
+                    Longitud (opcional)
+                  </IonLabel>
+
+                  <IonInput
+                    type="number"
+                    value={longitude}
+                    min="-180"
+                    max="180"
+                    step="any"
+                    placeholder="-71.615"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setLongitude(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+
+                <IonItem lines="none">
+                  <IonLabel position="stacked">
+                    Descripción (opcional)
+                  </IonLabel>
+
+                  <IonTextarea
+                    value={description}
+                    maxlength={500}
+                    rows={4}
+                    autoGrow
+                    placeholder="Información adicional, horarios o residuos aceptados"
+                    disabled={saving}
+                    onIonInput={(event) =>
+                      setDescription(
+                        event.detail.value ?? '',
+                      )
+                    }
+                  />
+                </IonItem>
+              </IonList>
+
+              <IonNote
+                color="medium"
+                style={{
+                  display: 'block',
+                  marginTop: '1rem',
+                  lineHeight: 1.5,
+                }}
+              >
+                * Campos obligatorios. Si agregas coordenadas,
+                debes completar latitud y longitud.
+              </IonNote>
+
+              <IonButton
+                expand="block"
+                className="ion-margin-top"
+                disabled={saving}
+                onClick={() =>
+                  void handleSavePoint()
+                }
+              >
+                {saving
+                  ? 'Guardando...'
+                  : isEditing
+                    ? 'Guardar cambios'
+                    : 'Crear punto'}
+              </IonButton>
+
+              {isEditing ? (
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  color="medium"
+                  disabled={saving}
+                  onClick={handleCancelEdit}
+                >
+                  Cancelar edición
+                </IonButton>
+              ) : null}
+
+              {saving ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    paddingTop: '1rem',
+                  }}
+                >
+                  <IonSpinner name="dots" />
+                </div>
+              ) : null}
+            </IonCardContent>
+          </IonCard>
+
+          {successMessage ? (
+            <IonText color="success">
+              <p style={{ padding: '0 0.5rem' }}>
+                {successMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          {errorMessage ? (
+            <IonText color="danger">
+              <p style={{ padding: '0 0.5rem' }}>
+                {errorMessage}
+              </p>
+            </IonText>
+          ) : null}
+
+          <section
+            style={{
+              padding: '0 0.5rem',
+              marginBottom: '1rem',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    marginBottom: '0.35rem',
+                  }}
+                >
+                  Puntos registrados
+                </h2>
+
+                <IonText color="medium">
+                  <p style={{ margin: 0 }}>
+                    {points.length}{' '}
+                    {points.length === 1
+                      ? 'punto registrado'
+                      : 'puntos registrados'}
+                  </p>
+                </IonText>
+              </div>
+
+              <IonButton
+                fill="outline"
+                disabled={loading}
+                onClick={() =>
+                  void loadPoints()
+                }
+              >
+                {loading
+                  ? 'Actualizando...'
+                  : 'Actualizar lista'}
+              </IonButton>
+            </div>
+          </section>
+
+          {loading ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: '2rem',
+              }}
+            >
+              <IonSpinner name="crescent" />
+            </div>
+          ) : null}
+
+          {!loading && points.length === 0 ? (
+            <IonText color="medium">
+              <p style={{ padding: '0 0.5rem' }}>
+                No existen puntos de reciclaje registrados
+                actualmente.
+              </p>
+            </IonText>
+          ) : null}
+
+          {!loading && points.length > 0 ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns:
+                  'repeat(auto-fit, minmax(340px, 1fr))',
+                gap: '1rem',
+                padding: '0 0.5rem',
+              }}
+            >
+              {points.map((point) => {
+                const isDeleting =
+                  deletingId === point.id;
+
+                return (
+                  <IonCard
+                    key={point.id}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <IonCardHeader>
+                      <IonCardSubtitle>
+                        Punto #{point.id}
+                      </IonCardSubtitle>
+
+                      <IonCardTitle>
+                        {point.name}
+                      </IonCardTitle>
+                    </IonCardHeader>
+
+                    <IonCardContent
+                      style={{
+                        display: 'flex',
+                        flex: 1,
+                        flexDirection: 'column',
+                      }}
+                    >
+                      <p style={{ marginTop: 0 }}>
+                        <strong>Dirección:</strong>{' '}
+                        {point.address}
+                      </p>
+
+                      {point.description ? (
+                        <p
+                          style={{
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <strong>Descripción:</strong>{' '}
+                          {point.description}
+                        </p>
+                      ) : null}
+
+                      <p>
+                        <strong>Coordenadas:</strong>{' '}
+                        {point.latitude !== null &&
+                        point.longitude !== null
+                          ? `${point.latitude}, ${point.longitude}`
+                          : 'No registradas'}
+                      </p>
+
+                      <IonText color="medium">
+                        <p>
+                          <strong>Creado:</strong>{' '}
+                          {formatCreatedAt(
+                            point.createdAt,
+                          )}
+                        </p>
+                      </IonText>
+
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          flexWrap: 'wrap',
+                          alignItems: 'center',
+                          marginTop: 'auto',
+                        }}
+                      >
+                        <IonButton
+                          size="small"
+                          fill="outline"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            handleStartEdit(point)
+                          }
+                        >
+                          Editar
+                        </IonButton>
+
+                        <IonButton
+                          size="small"
+                          color="danger"
+                          fill="clear"
+                          disabled={
+                            saving || isDeleting
+                          }
+                          onClick={() =>
+                            setPointToDelete(point)
+                          }
+                        >
+                          Eliminar
+                        </IonButton>
+
+                        {isDeleting ? (
+                          <IonSpinner name="dots" />
+                        ) : null}
+                      </div>
+                    </IonCardContent>
+                  </IonCard>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </IonContent>
 
       <IonAlert

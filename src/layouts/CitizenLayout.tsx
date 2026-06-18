@@ -1,6 +1,13 @@
-import { IonPage, IonRouterOutlet, IonSplitPane } from '@ionic/react';
+import {
+  IonPage,
+  IonRouterOutlet,
+  IonSplitPane,
+} from '@ionic/react';
 
-import { Redirect, Route } from 'react-router-dom';
+import {
+  Redirect,
+  Route,
+} from 'react-router-dom';
 
 import type { RouteChildrenProps } from 'react-router';
 
@@ -11,7 +18,6 @@ import { RecyclingPointsPage } from '../features/recycling';
 import { AppMenu } from './AppMenu';
 import { CitizenTabs } from './CitizenTabs';
 
-
 const TAB_HOME_PATHS: string[] = [
   '/app/inicio',
   '/app/noticias',
@@ -19,17 +25,43 @@ const TAB_HOME_PATHS: string[] = [
   '/app/eventos',
 ];
 
-export function CitizenLayout(_props: RouteChildrenProps) {
+export function CitizenLayout(
+  _props: RouteChildrenProps,
+) {
   return (
-    <IonSplitPane contentId="eco-main" when="lg">
+    <IonSplitPane
+      contentId="eco-main"
+      when="lg"
+    >
       <AppMenu />
+
       <IonPage id="eco-main">
         <IonRouterOutlet>
-          <Route exact path="/app" render={() => <Redirect to="/app/inicio" />} />
+          <Route
+            exact
+            path="/app"
+            render={() => (
+              <Redirect to="/app/inicio" />
+            )}
+          />
 
-          <Route exact path="/app/reciclaje" component={RecyclingPointsPage} />
-          <Route exact path="/app/indicadores" component={EnvironmentalIndicatorsPage} />
-          <Route exact path="/app/notificaciones" component={NotificationsSettingsPage}/>
+          <Route
+            exact
+            path="/app/reciclaje"
+            component={RecyclingPointsPage}
+          />
+
+          <Route
+            exact
+            path="/app/indicadores"
+            component={EnvironmentalIndicatorsPage}
+          />
+
+          <Route
+            exact
+            path="/app/notificaciones"
+            component={NotificationsSettingsPage}
+          />
 
           <Route
             path={TAB_HOME_PATHS}
